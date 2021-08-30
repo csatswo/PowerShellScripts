@@ -4,7 +4,8 @@ Function csou {
         [string]$prop,
         [string]$search
         )
-    Get-CsOnlineUser -Filter "($prop -like '*$search*')"
+    $result =  Get-CsOnlineUser -Filter "($prop -like '*$search*')"
+    $result
 }
 
 # Find Enterprise Voice related attributes for a user based on any provided attribute
@@ -13,5 +14,6 @@ Function csouev {
         [string]$prop,
         [string]$search
         )
-    Get-CsOnlineUser -Filter "($prop -like '*$search*')" | Select-Object DisplayName,SipAddress,EnterpriseVoiceEnabled,HostedVoiceMail,OnPremLineURI,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation
+    $result = Get-CsOnlineUser -Filter "($prop -like '*$search*')" | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,HostedVoiceMail,OnPremLineURI,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation
+    $result
 }
