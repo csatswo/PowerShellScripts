@@ -1,6 +1,6 @@
 ﻿Function AAResourceAccounts {
 param([Parameter(mandatory=$true)][String]$Name)
-$resourceAccountAA = Get-CsAutoAttendant | ? {$_.Name -like "$Name"}
+$resourceAccountAA = Get-CsAutoAttendant | Where-Object {$_.Name -like "$Name"}
 $resourceAccounts = $resourceAccountAA.ApplicationInstances
 $assignedAccounts = @()
 if ($resourceAccounts) {
@@ -19,7 +19,7 @@ Write-Host "`nNo resource accounts found"
 
 Function AAHolidays {
 param([Parameter(mandatory=$true)][String]$Name)
-$holidayAA = Get-CsAutoAttendant | ? {$_.Name -like "$Name"}
+$holidayAA = Get-CsAutoAttendant | Where-Object {$_.Name -like "$Name"}
 $holidays = Get-CsAutoAttendantHolidays -Identity $holidayAA.Identity -WarningAction SilentlyContinue
 $holidaysObject = @()
 if ($holidays) {
@@ -36,7 +36,7 @@ if ($holidays) {
             EndDate = $endDate
             EndTime = $endTime}
         $holidaysObject += New-Object -TypeName PSObject -Property $customProperties}
-    $holidaysObject | Select-Object AutoAttendant,Name,StartDate,StartTime,EndDate,EndTime | ft -AutoSize
+    $holidaysObject | Select-Object AutoAttendant,Name,StartDate,StartTime,EndDate,EndTime | Format-Table -AutoSize
 } else {
 Write-Host "`nNo holidays are configured for $($holidayAA.Identity)"
 }}

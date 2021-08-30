@@ -1,12 +1,12 @@
 ﻿Function LicenseReport {
-$finddomain = Get-AzureADDomain | ? {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}
+$finddomain = Get-AzureADDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}
 $domain = $finddomain.Name
-$domain -match '(?<content>.*).onmicrosoft.com' | Out-Null
+$domain -match '(Where-Object<content>.*).onmicrosoft.com' | Out-Null
 $subDomain = $matches['content']
 $subscribedSku = @()
 $azureSkus = Get-AzureADSubscribedSku 
 foreach ($azureSku in $azureSkus) {
-    $msolSku = Get-MsolSubscription | ? {$_.SkuPartNumber -eq $azureSku.SkuPartNumber -and $_.Status -ne "LockedOut"}
+    $msolSku = Get-MsolSubscription | Where-Object {$_.SkuPartNumber -eq $azureSku.SkuPartNumber -and $_.Status -ne "LockedOut"}
     $totalQty = 0
     foreach ($sku in $msolSku) {
         $totalQty += [int]$Sku.TotalLicenses
@@ -21,5 +21,5 @@ foreach ($azureSku in $azureSkus) {
     $subscribedSkuProperties = New-Object -TypeName PSObject -Property $subscribedSkuProps
     $subscribedSku += $subscribedSkuProperties
     }
-$subscribedSku | Select-Object SkuPartNumber,TotalQty,Consumed,Available | FT
+$subscribedSku | Select-Object SkuPartNumber,TotalQty,Consumed,Available | Format-Table -AutoSize
 }

@@ -1,6 +1,6 @@
 Function recent {
     [CmdletBinding()]Param([string] $search)
-    Get-History | ? {$_.CommandLine -like "*$search*"}
+    Get-History | Where-Object {$_.CommandLine -like "*$search*"}
 }
 
 Function again {
