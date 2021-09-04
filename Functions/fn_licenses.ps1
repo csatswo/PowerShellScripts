@@ -1,8 +1,5 @@
 ﻿Function LicenseReport {
-$finddomain = Get-AzureADDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}
-$domain = $finddomain.Name
-$domain -match '(Where-Object<content>.*).onmicrosoft.com' | Out-Null
-$subDomain = $matches['content']
+$domain = ((Get-AzureADDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}).Name) -replace "\.onmicrosoft\.com"
 $subscribedSku = @()
 $azureSkus = Get-AzureADSubscribedSku 
 foreach ($azureSku in $azureSkus) {
@@ -13,7 +10,7 @@ foreach ($azureSku in $azureSkus) {
         }
     $availableQty = $totalQty - [int]$azureSku.ConsumedUnits
     $subscribedSkuProps = @{
-        SkuPartNumber = "$($subdomain):$($azureSku.SkuPartNumber)"
+        SkuPartNumber = "$($domain):$($azureSku.SkuPartNumber)"
         TotalQty = $totalQty
         Consumed = $azureSku.ConsumedUnits
         Available = $availableQty
