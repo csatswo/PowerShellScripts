@@ -21,9 +21,8 @@
         Write-Host "Group Name: " -ForegroundColor Green -NoNewline
         Write-Host $groupCreationAllowedGroup.DisplayName -ForegroundColor Yellow
         $groupCreatorUsers | Select-Object DisplayName,UserPrincipalName,GroupName | Sort-Object -Property DisplayName | Format-Table -AutoSize
-        $groupCreationAllowedGroupNestedGroups = Get-AzureADGroupMember -ObjectId $groupCreationAllowedGroupId | Where-Object {$_.ObjectType -eq "Group"}
         if ($groupCreationAllowedGroupNestedGroups) {
-            Write-Host "`nNested groups found" -ForegroundColor Green
+            Write-Host "Nested groups found" -ForegroundColor Green
             foreach ($groupCreationAllowedGroupNestedGroup in $groupCreationAllowedGroupNestedGroups) {
                 Write-Host "Nested group name: " -ForegroundColor Green -NoNewline
                 Write-Host $groupCreationAllowedGroupNestedGroup.DisplayName -ForegroundColor Yellow
