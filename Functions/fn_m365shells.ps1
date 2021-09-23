@@ -23,7 +23,7 @@ Function m365mfa {
     teams
     Write-Host "Connecting to ExchangeOnline..."
     exo
-    $Host.UI.RawUI.WindowTitle = "M365: $((Get-MsolDomain | Where-Object {$_.isDefault}).name)"
+    $Host.UI.RawUI.WindowTitle = "$((Get-MsolDomain | Where-Object {$_.isDefault}).name)"
     Set-Location C:\Temp
 }
 
@@ -37,6 +37,6 @@ Function m365 {
     Import-Module MicrosoftTeams;Connect-MicrosoftTeams -Credential $Credential | Out-Null
     Write-Host "Connecting to ExchangeOnline..."
     Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -Credential $Credential -ShowBanner:$false
-    $Host.UI.RawUI.WindowTitle = "M365: $((Get-MsolDomain | Where-Object {$_.isDefault}).name)"
+    $Host.UI.RawUI.WindowTitle = "$((Get-MsolDomain | Where-Object {$_.isDefault}).name)"
     Set-Location C:\Temp
 }
