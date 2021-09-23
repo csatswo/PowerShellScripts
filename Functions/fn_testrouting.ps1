@@ -30,7 +30,9 @@ if ($UserReturned) {
             $MatchedVoiceRoutes = $MatchedVoiceRoutes | Where-Object {$_.PSTNUsage -eq $ChosenPSTNUsage}
             Write-Host "`rFound $(@($MatchedVoiceRoutes).Count) Voice Route(s) with matching pattern in PSTN Usage '$ChosenPSTNUsage', listing in priority order..." -ForegroundColor Green
             $MatchedVoiceRoutes | Select-Object Name, NumberPattern, PSTNUsage, OnlinePstnGatewayList, Priority | Format-Table
-            Write-Host "Note: Once a Voice Route that matches is found in a PSTN Usage, all other Voice Routes in other PSTN Usages will be ignored." -ForegroundColor Yellow
+            Write-Host "LineUri assigned to $($UserReturned.DisplayName) is: " -NoNewline -ForegroundColor Green
+            Write-Host "$($UserReturned.LineUri)"
+            Write-Host "`nNote: Once a Voice Route that matches is found in a PSTN Usage, all other Voice Routes in other PSTN Usages will be ignored." -ForegroundColor Yellow
         } else { Write-Warning -Message "No Voice Route with matching pattern found, unable to route call using Direct Routing." }
     } else {
         Write-Host "`rOnline Voice Routing Policy assigned to $user is: 'Global'" -ForegroundColor Green
@@ -46,7 +48,9 @@ if ($UserReturned) {
             $MatchedVoiceRoutes = $MatchedVoiceRoutes | Where-Object {$_.PSTNUsage -eq $ChosenPSTNUsage}
             Write-Host "`rFound $(@($MatchedVoiceRoutes).Count) Voice Route(s) with matching pattern in PSTN Usage '$ChosenPSTNUsage', listing in priority order..." -ForegroundColor Green
             $MatchedVoiceRoutes | Select-Object Name, NumberPattern, PSTNUsage, OnlinePstnGatewayList, Priority | Format-Table
-            Write-Host "Note: Once a Voice Route that matches is found in a PSTN Usage, all other Voice Routes in other PSTN Usages will be ignored." -ForegroundColor Yellow
+            Write-Host "LineUri assigned to $($UserReturned.DisplayName) is: " -NoNewline -ForegroundColor Green
+            Write-Host "$($UserReturned.LineUri)"
+            Write-Host "`nNote: Once a Voice Route that matches is found in a PSTN Usage, all other Voice Routes in other PSTN Usages will be ignored." -ForegroundColor Yellow
         } else { Write-Warning -Message "No Voice Route with matching pattern found, unable to route call using Direct Routing." }
     }
 } else { Write-Warning -Message "$user not found on tenant." }
