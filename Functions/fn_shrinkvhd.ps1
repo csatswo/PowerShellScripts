@@ -5,8 +5,8 @@ Function shrinkvhd {
     Write-Host `n`n`n`n`n`n
     if ($runningVMs) {
         Write-Host "The following VMs are still running:`n" -ForegroundColor Yellow
-        Write-Output $runningVMs.Name}
-        Read-Host -Prompt "`nPress Enter to turn off, or Ctrl-C to cancel"
+        Write-Output $runningVMs.Name
+        Read-Host -Prompt "`nPress Enter to turn off, or Ctrl-C to cancel"}
     foreach ($VM in $runningVMs) {
         Write-Host "Stopping $($VM.Name)..."
         Stop-VM -Name $VM.Name}
