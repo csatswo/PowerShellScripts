@@ -22,12 +22,12 @@ Function AssignAC {
     [CmdletBinding()]Param(
         [string]$UserPrincipalName
     )
-    # Get licenses SKUs for Phone System
+    # Get licenses SKUs for Audio Conferencing
     $msolAccountSkus = Get-MsolAccountSku
     $audioConfSku = $msolAccountSkus | ? {$_.AccountSkuId -like "*MCOMEETADV*"}
     # Get number of available licenses
     $availableAudioConf = $audioConfSku.ActiveUnits - $audioConfSku.ConsumedUnits
-    # Check the number of available Phone System licenses
+    # Check the number of available Audio Conferencing licenses
     if ($availableAudioConf -gt 0) { 
         $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
         Write-Host "There are $availableAudioConf Audio Conferencing licenses available." -ForegroundColor Green
@@ -42,12 +42,12 @@ Function AssignCAP {
     [CmdletBinding()]Param(
         [string]$UserPrincipalName
     )
-    # Get licenses SKUs for Phone System
+    # Get licenses SKUs for Common Area Phone
     $msolAccountSkus = Get-MsolAccountSku
     $commonAreaSku = $msolAccountSkus | ? {$_.AccountSkuId -like "*MCOCAP*"}
     # Get number of available licenses
     $availableCommonArea = $commonAreaSku.ActiveUnits - $commonAreaSku.ConsumedUnits
-    # Check the number of available Phone System licenses
+    # Check the number of available Common Area Phone licenses
     if ($availableCommonArea -gt 0) { 
         $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
         Write-Host "There are $availableCommonArea Common Area Phone licenses available." -ForegroundColor Green
@@ -62,12 +62,12 @@ Function AssignVU {
     [CmdletBinding()]Param(
         [string]$UserPrincipalName
     )
-    # Get licenses SKUs for Phone System
+    # Get licenses SKUs for Virtual User
     $msolAccountSkus = Get-MsolAccountSku
     $virtualUserSku = $msolAccountSkus | ? {$_.AccountSkuId -like "*PHONESYSTEM_VIRTUALUSER*"}
     # Get number of available licenses
     $availableVirtualUser = $virtualUserSku.ActiveUnits - $virtualUserSku.ConsumedUnits
-    # Check the number of available Phone System licenses
+    # Check the number of available Virtual User licenses
     if ($availableVirtualUser -gt 0) { 
         $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
         Write-Host "There are $availableVirtualUser Virtual User licenses available." -ForegroundColor Green
