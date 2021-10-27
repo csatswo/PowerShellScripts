@@ -3,7 +3,7 @@ $domain = ((Get-AzureADDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" 
 $subscribedSku = @()
 $azureSkus = Get-AzureADSubscribedSku 
 foreach ($azureSku in $azureSkus) {
-    $msolSku = Get-MsolSubscription | Where-Object {$_.SkuPartNumber -eq $azureSku.SkuPartNumber -and $_.Status -ne "LockedOut"}
+    $msolSku = Get-MsolSubscription | Where-Object {$_.SkuPartNumber -eq $azureSku.SkuPartNumber -and $_.Status -ne "LockedOut" -and $_.Status -ne "Suspended"}
     $totalQty = 0
     foreach ($sku in $msolSku) {
         $totalQty += [int]$Sku.TotalLicenses

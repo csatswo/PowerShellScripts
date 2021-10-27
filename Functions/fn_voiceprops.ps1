@@ -3,8 +3,8 @@
         [string]$UserPrincipalName
     )
     $userProperties = @()
-    $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
-    $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName
+    $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction SilentlyContinue
+    $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction SilentlyContinue
     $customProperties = @{
         DisplayName = $csOnlineUser.DisplayName
         UserPrincipalName = $csOnlineUser.UserPrincipalName
