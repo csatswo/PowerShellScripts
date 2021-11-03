@@ -5,14 +5,28 @@
     # Get licenses SKUs for Phone System
     $msolAccountSkus = Get-MsolAccountSku
     $phoneSystemSku = $msolAccountSkus | ? {$_.AccountSkuId -like "*MCOEV*"}
+    
     # Get number of available licenses
     $availablePhoneSystem = $phoneSystemSku.ActiveUnits - $phoneSystemSku.ConsumedUnits
+    
     # Check the number of available Phone System licenses
-    if ($availablePhoneSystem -gt 0) { 
-        $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
-        Write-Host "There are $availablePhoneSystem Phone System licenses available." -ForegroundColor Green
-        Write-Host "Assigning $($phoneSystemSku.AccountSkuId) to $($msolUser.DisplayName)"
-        Set-MsolUserLicense -ObjectId $msolUser.ObjectId -AddLicenses $phoneSystemSku.AccountSkuId
+    if ($availablePhoneSystem -gt 0) {  
+        try {
+            $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction Stop
+            if ($msolUser.Licenses.AccountSkuId -like "*MCOEV*" -or $msolUser.Licenses.AccountSkuId -like "*MCOCAP*" -or $msolUser.Licenses.AccountSkuId -like "*PHONESYSTEM_VIRTUALUSER*") {
+                Write-Warning "$($msolUser.UserPrincipalName) is already licensed"
+            } else {
+                Write-Host "There are $availablePhoneSystem Phone System licenses available." -ForegroundColor Green
+                Write-Host "Assigning $($phoneSystemSku.AccountSkuId) to $($msolUser.DisplayName)"
+                try {
+                    Set-MsolUserLicense -ObjectId $msolUser.ObjectId -AddLicenses $phoneSystemSku.AccountSkuId
+                } catch {
+                    Write-Warning "License assignment failed for $($msolUser.UserPrincipalName)"
+                }
+            }
+        } catch {
+            Write-Warning "$UserPrincipalName was not found"
+        }
     } else {
         Write-Warning "Not enough available Phone System licenses."
     }
@@ -45,14 +59,28 @@ Function AssignCAP {
     # Get licenses SKUs for Common Area Phone
     $msolAccountSkus = Get-MsolAccountSku
     $commonAreaSku = $msolAccountSkus | ? {$_.AccountSkuId -like "*MCOCAP*"}
+    
     # Get number of available licenses
     $availableCommonArea = $commonAreaSku.ActiveUnits - $commonAreaSku.ConsumedUnits
+    
     # Check the number of available Common Area Phone licenses
-    if ($availableCommonArea -gt 0) { 
-        $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName
-        Write-Host "There are $availableCommonArea Common Area Phone licenses available." -ForegroundColor Green
-        Write-Host "Assigning $($commonAreaSku.AccountSkuId) to $($msolUser.DisplayName)"
-        Set-MsolUserLicense -ObjectId $msolUser.ObjectId -AddLicenses $commonAreaSku.AccountSkuId
+    if ($availableCommonArea -gt 0) {  
+        try {
+            $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction Stop
+            if ($msolUser.Licenses.AccountSkuId -like "*MCOEV*" -or $msolUser.Licenses.AccountSkuId -like "*MCOCAP*" -or $msolUser.Licenses.AccountSkuId -like "*PHONESYSTEM_VIRTUALUSER*") {
+                Write-Warning "$($msolUser.UserPrincipalName) is already licensed"
+            } else {
+                Write-Host "There are $availableCommonArea Phone System licenses available." -ForegroundColor Green
+                Write-Host "Assigning $($commonAreaSku.AccountSkuId) to $($msolUser.DisplayName)"
+                try {
+                    Set-MsolUserLicense -ObjectId $msolUser.ObjectId -AddLicenses $commonAreaSku.AccountSkuId
+                } catch {
+                    Write-Warning "License assignment failed for $($msolUser.UserPrincipalName)"
+                }
+            }
+        } catch {
+            Write-Warning "$UserPrincipalName was not found"
+        }
     } else {
         Write-Warning "Not enough available Common Area Phone licenses."
     }
