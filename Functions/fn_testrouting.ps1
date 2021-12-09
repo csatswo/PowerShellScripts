@@ -18,7 +18,7 @@ if ($UserReturned) {
     $UserOnlineVoiceRoutingPolicy = ($UserReturned).OnlineVoiceRoutingPolicy
     if ($UserOnlineVoiceRoutingPolicy) {
         Write-Host "`rOnline Voice Routing Policy assigned to $user is: '$UserOnlineVoiceRoutingPolicy'" -ForegroundColor Green
-        $PSTNUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity Global).OnlinePstnUsages #($UserOnlineVoiceRoutingPolicy).Name).OnlinePstnUsages
+        $PSTNUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity $UserOnlineVoiceRoutingPolicy).OnlinePstnUsages #($UserOnlineVoiceRoutingPolicy).Name).OnlinePstnUsages
         foreach ($PSTNUsage in $PSTNUsages) {
             $VoiceRoutes += Get-CsOnlineVoiceRoute | Where-Object {$_.OnlinePstnUsages -contains $PSTNUsage} | Select-Object *,@{label="PSTNUsage"; Expression= {$PSTNUsage}}
         }
