@@ -4,7 +4,7 @@ Function csou {
         [string]$prop,
         [string]$search
         )
-    $result =  Get-CsOnlineUser -Filter "($prop -like '*$search*')"
+    $result = Get-CsOnlineUser | ? {$_.$prop -like $search}
     $result
 }
 
@@ -14,6 +14,6 @@ Function csouev {
         [string]$prop,
         [string]$search
         )
-    $result = Get-CsOnlineUser -Filter "($prop -like '*$search*')" | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,HostedVoiceMail,OnPremLineURI,LineUri,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation
+    $result = Get-CsOnlineUser | ? {$_.$prop -like $search} | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,HostedVoiceMail,OnPremLineURI,LineUri,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation
     $result
 }
