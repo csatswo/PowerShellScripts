@@ -1,17 +1,23 @@
 ﻿<# 
- .Synopsis
-  Extracts Channels and Users from Slack export ZIP file. Requires the 'ImportExcel' module.
+.SYNOPSIS
 
- .Description
-  Extracts the 'channels.json', 'groups.json', and 'users.json' files from a Slack export.
-  Parses the extracted json files and exports the data into XLSX in same directory as ZIP.
-  Requires the 'ImportExcel' module (Install-Module ImportExcel).
+    Convert-SlackExportToExcel
+    Extracts Channels and Users from Slack export ZIP file. Requires the 'ImportExcel' module.
 
- .Parameter Path
-  The path the Slack export ZIP file.
+.DESCRIPTION
 
- .Example
-   Convert-SlackExportToExcel -Path C:\Temp\SlackExport.zip
+    Author: csatswo
+    Extracts the 'channels.json', 'groups.json', and 'users.json' files from a Slack export.
+    Parses the extracted json files and exports the data into XLSX in same directory as ZIP.
+    Requires the 'ImportExcel' module (Install-Module ImportExcel).
+
+.PARAMETER Path
+
+    The path of the Slack export ZIP file.
+
+.EXAMPLE
+
+    .\Convert-SlackExportToExcel -Path C:\Temp\SlackExport.zip
 #>
 
 Param(
