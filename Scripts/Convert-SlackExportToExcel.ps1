@@ -99,7 +99,7 @@ if (Test-Path $path) {
     }
 
     # Loop to process the private channels
-    Write-Host "Parsing groups.json file..."
+    Write-Host "Parsing groups.json file (hash table)..."
     foreach ($groupID in $groupsHashTable.Keys) {
 
         try {
@@ -135,9 +135,9 @@ if (Test-Path $path) {
                     Creator = $groupsHashTable[$groupID].creator
                     CreatorName = $creatorRealNameFromJson
                     CreatorEmail = $creatorEmailFromJson
-                    Created = [System.DateTimeOffset]::FromUnixTimeSeconds($groupsHashTable[$groupID].created).ToString()
+                    Created = $created
                     Visibility = "Private"
-                    Archived = $channel.is_archived
+                    Archived = $groupsHashTable[$groupID].is_archived
                     Member = $member
                     MemberName = $realNameFromJson
                     MemberEmail = $emailFromJson
@@ -150,15 +150,6 @@ if (Test-Path $path) {
 
             # Test if 'created' time stamp exists, set to $null if not exist
             try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
-
-            # Try to find a match for the member IDs, set to $null if no match
-            if ($usersHashTable[$member]) {        
-                try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
-                try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
-            } else {
-                $realNameFromJson = $null
-                $emailFromJson = $null
-            }
 
             # Try to find a match for the creator IDs, set to $null if no match
             if ($usersHashTable[$groupsHashTable[$groupID].creator]) {
@@ -175,9 +166,9 @@ if (Test-Path $path) {
                 Creator = $groupsHashTable[$groupID].creator
                 CreatorName = $creatorRealNameFromJson
                 CreatorEmail = $creatorEmailFromJson
-                Created = [System.DateTimeOffset]::FromUnixTimeSeconds($groupsHashTable[$groupID].created).ToString()
+                Created = $created
                 Visibility = "Private"
-                Archived = $channel.is_archived
+                Archived = $groupsHashTable[$groupID].is_archived
                 Member = $null
                 MemberName = $realNameFromJson
                 MemberEmail = $emailFromJson
@@ -190,7 +181,7 @@ if (Test-Path $path) {
     }
 
     # Loop to process the public channels
-    Write-Host "Parsing channels.json file..."
+    Write-Host "Parsing channels.json file (hash table)..."
     foreach ($channelID in $channelsHashTable.Keys) {
 
         try {
@@ -242,15 +233,6 @@ if (Test-Path $path) {
             # Test if 'created' time stamp exists, set to $null if not exist
             try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
 
-            # Try to find a match for the member IDs, set to $null if no match
-            if ($usersHashTable[$member]) {        
-                try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
-                try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
-            } else {
-                $realNameFromJson = $null
-                $emailFromJson = $null
-            }
-
             # Try to find a match for the creator IDs, set to $null if no match
             if ($usersHashTable[$channelsHashTable[$channelID].creator]) {
                 try { $creatorRealNameFromJson = $usersHashTable[$channelsHashTable[$channelID].creator].profile.real_name } catch { $creatorRealNameFromJson = $null }
@@ -281,8 +263,9 @@ if (Test-Path $path) {
     }
 
 # Export results to same folder as the ZIP
+Write-Host "Saving results..."
 $outputFile = "$($pathZIP.Directory)\Slack_Channels_and_Users_$(Get-Date -UFormat '%Y-%m-%d').xlsx"
-$channels | Sort-Object Channel,Member | Select-Object Channel,ChannelID,Visibility,Archived,Member,MemberName,MemberEmail | Export-Excel -WorksheetName "Channels" -Path $outputFile
+$channels | Sort-Object Channel,Member | Select-Object Channel,ChannelID,Creator,CreatorName,CreatorEmail,Created,Visibility,Archived,Member,MemberName,MemberEmail | Export-Excel -WorksheetName "Channels" -Path $outputFile
 $users | Sort-Object Email | Select-Object RealName,DisplayName,FirstName,LastName,Email,ID,Admin,Owner,PrimaryOwner,Restricted,UltraRestricted,Bot,AppUser,Deleted | Export-Excel -WorksheetName "Users" -Path $outputFile
 Write-Host "Done! Results saved to $outputFile"
 
