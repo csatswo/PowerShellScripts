@@ -25,7 +25,7 @@ Param(
 )
 
 if (Test-Path $path) {
-    
+
     # Check for "ImportExcel" module
     if (Get-Module -ListAvailable -Name ImportExcel) {
         Import-Module ImportExcel
@@ -51,65 +51,238 @@ if (Test-Path $path) {
     $channelsJson = Get-Content "$($pathZIP.Directory)\channels.json" | ConvertFrom-Json
     $groupsJson = Get-Content "$($pathZIP.Directory)\groups.json" | ConvertFrom-Json
     $usersJson = Get-Content "$($pathZIP.Directory)\users.json" | ConvertFrom-Json
+
+    $usersHashTable = $usersJson | Group-Object -AsHashTable -Property ID
+    $channelsHashTable = $channelsJson | Group-Object -AsHashTable -Property ID
+    $groupsHashTable = $groupsJson | Group-Object -AsHashTable -Property ID        
     
     $channels = @()
     $users = @()
 
-    # Loop to process the public channels
-    Write-Host "Parsing channels.json file..."
-    foreach ($channel in $channelsJson) {
-        foreach ($member in $channel.members) {
-            $customProperties = @{
-                Channel = $channel.name
-                ChannelID = $channel.id
-                Member = $member
-                Visibility = "Public"
-                Archived = $channel.is_archived
-            }
-            $channels += New-Object -TypeName PSObject -Property $customProperties
+    # Loop to process the users
+    Write-Host "Parsing users.json file..."
+    foreach ($userID in $usersHashTable.Keys) {
+        
+        # Test if values exist, set to $null if not exist
+        try { $realNameFromJson = $usersHashTable[$userID].profile.real_name } catch { $realNameFromJson = $null }
+        try { $displayNameFromJson = $usersHashTable[$userID].profile.display_name } catch { $displayNameFromJson = $null }
+        try { $firstNameFromJson = $usersHashTable[$userID].profile.first_name } catch { $firstNameFromJson = $null }
+        try { $lastNameFromJson = $usersHashTable[$userID].profile.last_name } catch { $lastNameFromJson = $null }
+        try { $emailFromJson = $usersHashTable[$userID].profile.email } catch { $emailFromJson = $null }
+        try { $adminFromJson = $usersHashTable[$userID].is_admin } catch { $adminFromJson = $null }
+        try { $ownerFromJson = $usersHashTable[$userID].is_owner } catch { $ownerFromJson = $null }
+        try { $primaryOwnerFromJson = $usersHashTable[$userID].is_primary_owner } catch { $primaryOwnerFromJson = $null }
+        try { $restrictedFromJson = $usersHashTable[$userID].is_restricted } catch { $restrictedFromJson = $null }
+        try { $ultraRestrictedFromJson = $usersHashTable[$userID].is_ultra_restricted } catch { $ultraRestrictedFromJson = $null }
+        try { $botFromJson = $usersHashTable[$userID].is_bot } catch { $botFromJson = $null }
+        try { $appUserFromJson = $usersHashTable[$userID].is_app_user } catch { $appUserFromJson = $null }
+        try { $deletedFromJson = $usersHashTable[$userID].deleted } catch { $deletedFromJson = $null }
+
+        $customProperties = @{
+            ID = $usersHashTable[$userID].id
+            RealName = $realNameFromJson
+            DisplayName = $displayNameFromJson
+            FirstName = $firstNameFromJson
+            LastName = $lastNameFromJson
+            Email = $emailFromJson
+            Admin = $adminFromJson
+            Owner = $ownerFromJson
+            PrimaryOwner = $primaryOwnerFromJson
+            Restricted = $restrictedFromJson
+            UltraRestricted = $ultraRestrictedFromJson
+            Bot = $botFromJson
+            AppUser = $appUserFromJson
+            Deleted = $deletedFromJson
         }
+        $users += New-Object -TypeName PSObject -Property $customProperties
+
     }
 
     # Loop to process the private channels
     Write-Host "Parsing groups.json file..."
-    foreach ($channel in $groupsJSON) {
-        foreach ($member in $channel.members) {
+    foreach ($groupID in $groupsHashTable.Keys) {
+
+        try {
+
+            # Test if channel has members
+            $groupsHashTable[$groupID].members | Out-Null
+            # Test if 'created' time stamp exists, set to $null if not exist
+            try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
+
+            foreach ($member in $groupsHashTable[$groupID].members) {
+
+                # Try to find a match for the member IDs, set to $null if no match
+                if ($usersHashTable[$member]) {        
+                    try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
+                    try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
+                } else {
+                    $realNameFromJson = $null
+                    $emailFromJson = $null
+                }
+
+                # Try to find a match for the creator IDs, set to $null if no match
+                if ($usersHashTable[$groupsHashTable[$groupID].creator]) {
+                    try { $creatorRealNameFromJson = $usersHashTable[$groupsHashTable[$groupID].creator].profile.real_name } catch { $creatorRealNameFromJson = $null }
+                    try { $creatorEmailFromJson = $usersHashTable[$groupsHashTable[$groupID].creator].profile.email } catch { $creatorEmailFromJson = $null }
+                } else {
+                    $creatorRealNameFromJson = $null
+                    $creatorEmailFromJson = $null
+                }
+
+                $customProperties = @{
+                    Channel = $groupsHashTable[$groupID].name
+                    ChannelID = $groupsHashTable[$groupID].id
+                    Creator = $groupsHashTable[$groupID].creator
+                    CreatorName = $creatorRealNameFromJson
+                    CreatorEmail = $creatorEmailFromJson
+                    Created = [System.DateTimeOffset]::FromUnixTimeSeconds($groupsHashTable[$groupID].created).ToString()
+                    Visibility = "Private"
+                    Archived = $channel.is_archived
+                    Member = $member
+                    MemberName = $realNameFromJson
+                    MemberEmail = $emailFromJson
+                }
+                $channels += New-Object -TypeName PSObject -Property $customProperties
+
+            }
+
+        } catch {
+
+            # Test if 'created' time stamp exists, set to $null if not exist
+            try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
+
+            # Try to find a match for the member IDs, set to $null if no match
+            if ($usersHashTable[$member]) {        
+                try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
+                try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
+            } else {
+                $realNameFromJson = $null
+                $emailFromJson = $null
+            }
+
+            # Try to find a match for the creator IDs, set to $null if no match
+            if ($usersHashTable[$groupsHashTable[$groupID].creator]) {
+                try { $creatorRealNameFromJson = $usersHashTable[$groupsHashTable[$groupID].creator].profile.real_name } catch { $creatorRealNameFromJson = $null }
+                try { $creatorEmailFromJson = $usersHashTable[$groupsHashTable[$groupID].creator].profile.email } catch { $creatorEmailFromJson = $null }
+            } else {
+                $creatorRealNameFromJson = $null
+                $creatorEmailFromJson = $null
+            }
+
             $customProperties = @{
-                Channel = $channel.name
-                ChannelID = $channel.id
-                Member = $member
+                Channel = $groupsHashTable[$groupID].name
+                ChannelID = $groupsHashTable[$groupID].id
+                Creator = $groupsHashTable[$groupID].creator
+                CreatorName = $creatorRealNameFromJson
+                CreatorEmail = $creatorEmailFromJson
+                Created = [System.DateTimeOffset]::FromUnixTimeSeconds($groupsHashTable[$groupID].created).ToString()
                 Visibility = "Private"
                 Archived = $channel.is_archived
+                Member = $null
+                MemberName = $realNameFromJson
+                MemberEmail = $emailFromJson
             }
+
             $channels += New-Object -TypeName PSObject -Property $customProperties
+
         }
+
     }
 
-    # Loop to process the users
-    Write-Host "Parsing users.json file..."
-    foreach ($user in $usersJson) {
-        $customProperties = @{
-            RealName = $user.profile.real_name
-            DisplayName = $user.profile.display_name
-            FirstName = $user.profile.first_name
-            LastName = $user.profile.last_name
-            Email = $user.profile.email
-            ID = $user.id
-            Admin = $user.is_admin
-            Owner = $user.is_owner
-            PrimaryOwner = $user.is_primary_owner
-            Restricted = $user.is_restricted
-            UltraRestricted = $user.is_ultra_restricted
-            Bot = $user.is_bot
-            AppUser = $user.is_app_user
-            Deleted = $user.deleted
+    # Loop to process the public channels
+    Write-Host "Parsing channels.json file..."
+    foreach ($channelID in $channelsHashTable.Keys) {
+
+        try {
+
+            # Test if channel has members
+            $channelsHashTable[$channelID].members | Out-Null
+            # Test if 'created' time stamp exists, set to $null if not exist
+            try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
+
+            foreach ($member in $channelsHashTable[$channelID].members) {
+
+                # Try to find a match for the member IDs, set to $null if no match
+                if ($usersHashTable[$member]) {        
+                    try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
+                    try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
+                } else {
+                    $realNameFromJson = $null
+                    $emailFromJson = $null
+                }
+
+                # Try to find a match for the creator IDs, set to $null if no match
+                if ($usersHashTable[$channelsHashTable[$channelID].creator]) {
+                    try { $creatorRealNameFromJson = $usersHashTable[$channelsHashTable[$channelID].creator].profile.real_name } catch { $creatorRealNameFromJson = $null }
+                    try { $creatorEmailFromJson = $usersHashTable[$channelsHashTable[$channelID].creator].profile.email } catch { $creatorEmailFromJson = $null }
+                } else {
+                    $creatorRealNameFromJson = $null
+                    $creatorEmailFromJson = $null
+                }
+
+                $customProperties = @{
+                    Channel = $channelsHashTable[$channelID].name
+                    ChannelID = $channelsHashTable[$channelID].id
+                    Creator = $channelsHashTable[$channelID].creator
+                    CreatorName = $creatorRealNameFromJson
+                    CreatorEmail = $creatorEmailFromJson
+                    Created = $created
+                    Visibility = "Private"
+                    Archived = $channelsHashTable[$channelID].is_archived
+                    Member = $member
+                    MemberName = $realNameFromJson
+                    MemberEmail = $emailFromJson
+                }
+                $channels += New-Object -TypeName PSObject -Property $customProperties
+
+            }
+
+        } catch {
+
+            # Test if 'created' time stamp exists, set to $null if not exist
+            try { $created = Get-Date ([System.DateTimeOffset]::FromUnixTimeSeconds($channelsHashTable[$channelID].created).ToString()) -UFormat %Y-%m-%d } catch { $created = $null }
+
+            # Try to find a match for the member IDs, set to $null if no match
+            if ($usersHashTable[$member]) {        
+                try { $realNameFromJson = $usersHashTable[$member].profile.real_name } catch { $realNameFromJson = $null }
+                try { $emailFromJson = $usersHashTable[$member].profile.email } catch { $emailFromJson = $null }
+            } else {
+                $realNameFromJson = $null
+                $emailFromJson = $null
+            }
+
+            # Try to find a match for the creator IDs, set to $null if no match
+            if ($usersHashTable[$channelsHashTable[$channelID].creator]) {
+                try { $creatorRealNameFromJson = $usersHashTable[$channelsHashTable[$channelID].creator].profile.real_name } catch { $creatorRealNameFromJson = $null }
+                try { $creatorEmailFromJson = $usersHashTable[$channelsHashTable[$channelID].creator].profile.email } catch { $creatorEmailFromJson = $null }
+            } else {
+                $creatorRealNameFromJson = $null
+                $creatorEmailFromJson = $null
+            }
+
+            $customProperties = @{
+                Channel = $channelsHashTable[$channelID].name
+                ChannelID = $channelsHashTable[$channelID].id
+                Creator = $channelsHashTable[$channelID].creator
+                CreatorName = $creatorRealNameFromJson
+                CreatorEmail = $creatorEmailFromJson
+                Created = $created
+                Visibility = "Private"
+                Archived = $channelsHashTable[$channelID].is_archived
+                Member = $null
+                MemberName = $realNameFromJson
+                MemberEmail = $emailFromJson
+            }
+
+            $channels += New-Object -TypeName PSObject -Property $customProperties
+
         }
-        $users += New-Object -TypeName PSObject -Property $customProperties
+
     }
 
 # Export results to same folder as the ZIP
 $outputFile = "$($pathZIP.Directory)\Slack_Channels_and_Users_$(Get-Date -UFormat '%Y-%m-%d').xlsx"
-$channels | Sort-Object Channel,Member | Select-Object Channel,ChannelID,Member,Visibility,Archived | Export-Excel -WorksheetName "Channels" -Path $outputFile
+$channels | Sort-Object Channel,Member | Select-Object Channel,ChannelID,Visibility,Archived,Member,MemberName,MemberEmail | Export-Excel -WorksheetName "Channels" -Path $outputFile
 $users | Sort-Object Email | Select-Object RealName,DisplayName,FirstName,LastName,Email,ID,Admin,Owner,PrimaryOwner,Restricted,UltraRestricted,Bot,AppUser,Deleted | Export-Excel -WorksheetName "Users" -Path $outputFile
 Write-Host "Done! Results saved to $outputFile"
 
