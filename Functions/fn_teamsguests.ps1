@@ -1,19 +1,30 @@
-﻿Function TeamsGuests {
-Param(
-    [Parameter(mandatory=$false)][String]$Name,
-    [Parameter(mandatory=$false)][String]$Path
-)
-$teamsGuests = @()
-$teams = @()
-if ($Name) {
-    $teams = Get-Team -WarningAction SilentlyContinue | Where-Object {$_.DisplayName -like "$Name"}
+﻿Function TeamGuests {
+    Param(
+        [Parameter(mandatory=$false)][String]$GroupId,
+        [Parameter(mandatory=$false)][String]$MailNickName,
+        [Parameter(mandatory=$false)][String]$DisplayName
+    )
+    $teamsGuests = @()
+    $teams = @()
+    if ($GroupId) {
+        $teams = Get-Team -GroupId $GroupId -WarningAction SilentlyContinue
+    }
+    if ($MailNickName) {
+        $teams = Get-Team -MailNickName $MailNickName -WarningAction SilentlyContinue
+    }
+    if ($DisplayName) {
+        $teams = Get-Team -DisplayName $DisplayName -WarningAction SilentlyContinue
+    }
+    if (-not ($teams)) {
+        $teams = Get-Team -WarningAction SilentlyContinue
+    }
     Foreach ($team in $teams) {
         $guests = Get-TeamUser -GroupId $team.GroupId -Role Guest
         Foreach ($guest in $guests) {
-            $customProperties = @{
+            $teamsGuests += [PSCustomObject]@{
                 GuestUserId = $guest.UserId
-                GuestUser = $guest.User
-                GuestName = $guest.Name
+                UserPrincipalName = $guest.User
+                DisplayName = $guest.Name
                 GuestRole = $guest.Role
                 TeamGroupId = $team.GroupId
                 TeamDisplayName = $team.DisplayName
@@ -21,37 +32,13 @@ if ($Name) {
                 TeamArchived = $team.Archived
                 TeamMailNickName = $team.MailNickName
                 TeamDescription = $team.Description
-                }
-            $teamsGuests += New-Object -TypeName PSObject -Property $customProperties
+            }
         }
     }
-} else {
-    $teams = Get-Team -WarningAction SilentlyContinue
-    Foreach ($team in $teams) {
-        $guests = Get-TeamUser -GroupId $team.GroupId -Role Guest
-        Foreach ($guest in $guests) {
-            $customProperties = @{
-                GuestUserId = $guest.UserId
-                GuestUser = $guest.User
-                GuestName = $guest.Name
-                GuestRole = $guest.Role
-                TeamGroupId = $team.GroupId
-                TeamDisplayName = $team.DisplayName
-                TeamVisibility = $team.Visibility
-                TeamArchived = $team.Archived
-                TeamMailNickName = $team.MailNickName
-                TeamDescription = $team.Description
-                }
-            $teamsGuests += New-Object -TypeName PSObject -Property $customProperties
-        }
+    if ($teamsGuests) {
+        Write-Host "`n`nThe following guests were found:" -ForegroundColor Cyan
+        $teamsGuests | Sort-Object TeamDisplayName
+    } else {
+        Write-Host "`n`nNo guests were found" -ForegroundColor Cyan
     }
 }
-if ($teamsGuests) {
-    Write-Host "`n`nThe following guests were found:" -ForegroundColor Cyan
-    Write-Output $teamsGuests | Select-Object TeamDisplayName,GuestName,GuestUser | Sort-Object -Property TeamDisplayName | Format-Table
-} else {
-    Write-Host "`n`nNo guests were found" -ForegroundColor Cyan
-}
-if ($Path) {
-    $teamsGuests | Export-Csv -Path $Path -NoTypeInformation
-}}
