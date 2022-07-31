@@ -1,16 +1,22 @@
 ﻿function VoiceProps {
     [CmdletBinding()]Param(
-        [string]$UserPrincipalName
+        [Parameter(mandatory=$true)][String]$UserPrincipalName,
+        [Parameter(mandatory=$false)][Bool]$Join
     )
     $userProperties = @()
     $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction SilentlyContinue
     $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction SilentlyContinue
     $groupPolicyAssignments = EnumGroupPolicyAssignment
-    $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"}
+    $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"} | Sort-Object
     if ($msolUser.IsLicensed -eq $true) {
         $licenses = $msolUser.Licenses.AccountSkuId
     } else {
         $licenses = $null
+    }
+    if ($Join -eq $true) {
+        Write-Host "Enter the join character(s): " -ForegroundColor Cyan -NoNewline
+        $joinChars = Read-Host
+        $licenses = (($licenses | Sort-Object) -join "$joinChars")
     }
     $userProperties = [PSCustomObject]@{
         DisplayName = $csOnlineUser.DisplayName
