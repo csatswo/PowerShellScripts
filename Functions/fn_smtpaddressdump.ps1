@@ -1,4 +1,4 @@
-﻿function SMTPAddressDump {
+﻿function SMTPUserAddressDump {
     [CmdletBinding()]Param(
         [Parameter(mandatory=$true)][String]$UserPrincipalName,
         [Parameter(mandatory=$false)][Bool]$Join
@@ -19,4 +19,32 @@
         OtherSMTP = $otherSMTP
         }
     $results
+}
+function SMTPTenantAddressDump {
+    [CmdletBinding()]Param(
+        [Parameter(mandatory=$false)][Bool]$Join
+    )
+    Write-Warning -Message "This will run for every user and can be extremely slow."
+    $proceed = Read-Host -Prompt "Type `'Yes`' to proceed"
+    if ($proceed -eq "Yes") {
+        $allUsers = Get-MsolUser -All
+        $results = @()
+        foreach ($user in $allUsers) {
+            $proxyAddresses = $user.ProxyAddresses
+            $primarySMTP = (($proxyAddresses | ? {$_ -clike "SMTP*"}) -replace "SMTP:")
+            if ($Join -eq $true) {
+                Write-Host "Enter the join character(s): " -ForegroundColor Cyan -NoNewline
+                $joinChars = Read-Host
+                $otherSMTP = ((($proxyAddresses | ? {$_ -clike "smtp*"}) -replace "smtp:" | Sort-Object) -join "$joinChars")
+            } else {
+                $otherSMTP = (($proxyAddresses | ? {$_ -clike "smtp*"}) -replace "smtp:" | Sort-Object)
+            }
+            $results += [PSCustomObject]@{
+                UserPrincipalName = $user.UserPrincipalName
+                PrimarySMTP = $primarySMTP
+                OtherSMTP = $otherSMTP
+                }
+        }
+        $results | Select-Object UserPrincipalName,PrimarySMTP,OtherSMTP
+    }
 }
