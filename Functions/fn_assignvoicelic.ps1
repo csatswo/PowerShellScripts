@@ -34,7 +34,6 @@
                 }
             }
         } catch {
-            Write-Warning "$UserPrincipalName was not found"
             Write-Host $_.Exception.Message -ForegroundColor Red
         }
     } else {
@@ -77,7 +76,6 @@ Function AssignCAP {
                 }
             }
         } catch {
-            Write-Warning "$UserPrincipalName was not found"
             Write-Host $_.Exception.Message -ForegroundColor Red
         }
     } else {
@@ -120,7 +118,6 @@ Function AssignVU {
                 }
             }
         } catch {
-            Write-Warning "$UserPrincipalName was not found"
             Write-Host $_.Exception.Message -ForegroundColor Red
         }
     } else {
@@ -154,7 +151,6 @@ Function AssignAC {
                 }
             }
         } catch {
-            Write-Warning "$UserPrincipalName was not found"
             Write-Host $_.Exception.Message -ForegroundColor Red
         }
     } else {

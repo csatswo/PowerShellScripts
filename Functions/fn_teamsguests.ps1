@@ -16,7 +16,11 @@
         $teams = Get-Team -DisplayName $DisplayName -WarningAction SilentlyContinue
     }
     if (-not ($teams)) {
-        $teams = Get-Team -WarningAction SilentlyContinue
+        Write-Warning -Message "This will run for every user and can be extremely slow."
+        $proceed = Read-Host -Prompt "Type `'Yes`' to proceed"
+        if ($proceed -eq "Yes") {
+            $teams = Get-Team -WarningAction SilentlyContinue
+        } else { Break }
     }
     Foreach ($team in $teams) {
         $guests = Get-TeamUser -GroupId $team.GroupId -Role Guest
