@@ -15,11 +15,13 @@
             $otherSMTP = (($proxyAddresses | ? {$_ -clike "smtp*"}) -replace "smtp:" | Sort-Object)
         }
         $results += [PSCustomObject]@{
+            UserType = $user.UserType
+            DisplayName = $user.DisplayName
             UserPrincipalName = $msolUser.UserPrincipalName
             PrimarySMTP = $primarySMTP
             OtherSMTP = $otherSMTP
             }
-        $results
+        $results | Select-Object UserType,DisplayName,UserPrincipalName,PrimarySMTP,OtherSMTP
     } catch {
         Write-Host $_.Exception.Message -ForegroundColor Red
     }
@@ -44,11 +46,13 @@ function SMTPTenantAddressDump {
                 $otherSMTP = (($proxyAddresses | ? {$_ -clike "smtp*"}) -replace "smtp:" | Sort-Object)
             }
             $results += [PSCustomObject]@{
+                UserType = $user.UserType
+                DisplayName = $user.DisplayName
                 UserPrincipalName = $user.UserPrincipalName
                 PrimarySMTP = $primarySMTP
                 OtherSMTP = $otherSMTP
                 }
         }
-        $results | Select-Object UserPrincipalName,PrimarySMTP,OtherSMTP
+        $results | Select-Object UserType,DisplayName,UserPrincipalName,PrimarySMTP,OtherSMTP
     } else { Break }
 }
