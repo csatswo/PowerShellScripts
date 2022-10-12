@@ -4,8 +4,9 @@ Function shrinkvhd {
     $virtualMachines = Get-VM
     $VHDs = $virtualMachines.HardDrives.Path
     $VHDs | ForEach-Object {$totalDriveUsageBefore += ((Measure-Object -InputObject (Get-Item $_).Length -Sum).Sum / 1GB)}
+    Write-Host `n`n`n`n`n
     foreach ($virtualMachine in $virtualMachines) {
-        Write-Host "Shrinking $($virtualMachine.Name)" -ForegroundColor Yellow
+        Write-Host "Shrinking $($virtualMachine.Name)" -ForegroundColor Cyan
         if ($virtualMachine.State -eq "Running") {
             $runningPrompt = Read-Host -Prompt "The VM is still running. Enter `"Y`" to turn off, or anything else to skip."
             if ($runningPrompt -eq "y") {
@@ -24,12 +25,13 @@ Function shrinkvhd {
             Optimize-VHD -Path $VHD -Mode Full
             Dismount-VHD -Path $VHD
             $driveUsageAfter += ((Measure-Object -InputObject (Get-Item $VHD).Length -Sum).Sum / 1GB)
-            Write-Host "    Drive before: $driveUsageBefore GB`n    Drive after: $driveUsageAfter GB"
+            Write-Host "    Before: $([math]::Round($driveUsageBefore,2)) GB`n    After:  $([math]::Round($driveUsageAfter,2)) GB"
+            Write-Host "    Shrunk: $([math]::Round(($driveUsageBefore - $driveUsageAfter),2)) GB"
         }
         
     }
     $VHDs | ForEach-Object {$totalDriveUsageAfter += ((Measure-Object -InputObject (Get-Item $_).Length -Sum).Sum / 1GB)}
-    Write-Host "Shrinking complete" -ForegroundColor Yellow
-    Write-Host "Drive usage before was $totalDriveUsageBefore GB`nDrive after before was $totalDriveUsageAfter GB"
-    Write-Host "Total saved: $($totalDriveUsageBefore - $totalDriveUsageAfter) GB"
+    Write-Host "`nShrinking complete" -ForegroundColor Cyan
+    Write-Host "Drive usage before was: $([math]::Round($totalDriveUsageBefore,2)) GB`nDrive usage after was:  $([math]::Round($totalDriveUsageAfter,2)) GB"
+    Write-Host "Total saved:            $([math]::Round(($totalDriveUsageBefore - $totalDriveUsageAfter),2)) GB"
 }
