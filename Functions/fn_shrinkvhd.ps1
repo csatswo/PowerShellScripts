@@ -1,5 +1,4 @@
 Function shrinkvhd {
-    Clear-Host
     $totalDriveUsageBefore = 0
     $totalDriveUsageAfter = 0
     $virtualMachines = Get-VM
