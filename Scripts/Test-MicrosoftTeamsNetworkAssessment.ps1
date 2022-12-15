@@ -17,6 +17,10 @@
 
     The duration in seconds to run the media quality check. The default is 300 seconds.
 
+.PARAMETER Destination
+
+    The destination directory to copy the results to.
+
 .EXAMPLE
 
     .\Test-MicrosoftTeamsNetworkAssessment -Site Site01
@@ -24,10 +28,22 @@
 .EXAMPLE
 
     .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
+
+.EXAMPLE
+
+    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Destination "C:\Temp"
 #>
 Param(
     [Parameter(mandatory=$true)][String]$Site,
-    [Parameter(Mandatory = $false)][ValidateScript({$_ -gt 0})][Int]$Duration
+    [Parameter(Mandatory = $false)][ValidateScript({
+        $_ -gt 0
+    })][Int]$Duration,
+    [Parameter(Mandatory = $false)][ValidateScript({
+        if (Test-Path $_){
+            $true
+        } else {
+            throw "Path $_ is not valid"
+        }})][string]$Destination 
 )
 $siteClean = ($site -replace " " -replace "`"").Trim()
 $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
@@ -46,7 +62,6 @@ $result = ($hostOutput[$hostOutput.Count-1]).Substring($startIndex,$length)
 Move-Item $result -Destination $tempFolder
 Write-Host `n
 $hostOutput[0..($hostOutput.Count-2)]
-Write-Host "`nRunning the quality check. This should take 5 minutes." -ForegroundColor Cyan
 if ($duration) {
         if ($duration -le 300) {
         Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
@@ -81,7 +96,8 @@ Write-Host "Avg Latency:     $([math]::Round((($latencyArray | Measure-Object -A
 Write-Host "Avg Jitter Rate: $([math]::Round((($jitterArray | Measure-Object -Average).Average),2))"
 Write-Host "`nCall Quality Check Has Finished"
 Remove-Item -Path $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
-$zipPath = $tempFolder + "\TeamsNetAssessmentResults_" + $siteClean + "_" +(Get-Date -Format yyyyMMddHHmmssffff) + ".zip"
+$zipFileName = ("TeamsNetAssessmentResults_" + $siteClean + "_" +(Get-Date -Format yyyyMMddHHmmssffff) + ".zip")
+$zipPath = ($tempFolder + "\" + $zipFileName)
 $compress = @{
     LiteralPath = (Get-ChildItem -Path $tempFolder).FullName
     CompressionLevel = "Fastest"
@@ -89,5 +105,11 @@ $compress = @{
 }
 Compress-Archive @compress
 Write-Host "`nAll tests complete!" -ForegroundColor Green
-Write-Host "`nResults saved to " -ForegroundColor Green -NoNewline
-Write-Host "$zipPath"
+Write-Host "`nCopying results to $Destination"
+try {
+    Copy-Item -Path $zipPath -Destination $Destination -ErrorAction Stop
+    Write-Host "Results saved to $Destination`n" -ForegroundColor Green
+} catch {
+    Write-Host "`nError: $($Error[0])" -ForegroundColor Red
+    Write-Host "Results saved to $zipPath`n"
+}
