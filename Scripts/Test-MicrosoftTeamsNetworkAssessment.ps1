@@ -64,18 +64,20 @@ Write-Host `n
 $hostOutput[0..($hostOutput.Count-2)]
 if ($duration) {
         if ($duration -le 300) {
-        Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
+        # Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
     } else {
-        Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
+        # Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
         # Maybe add confirmation? Output warning to use Ctrl+C to abort?
     }
     $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
     $oldDuration = (($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '')
-    Write-Host "Updating configuration - changing test duration from $oldDuration to $duration"
+    Write-Host "`nUpdating configuration - changing test duration from $oldDuration to $duration"
     $i = $configFile.IndexOf(($configFile | Where-Object {$_ -like "*MediaDuration*"}))
     $configFile[$i] = $configFile[$i] -replace '\d+',$duration
     $configFile | Set-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
 }
+$durationMin = $([math]::Round(((($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '') / 60),1))
+Write-Host "`nRunning the connectivity check. This will take about $durationMin minute(s)." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
 $startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
 $length = (($hostOutput[$hostOutput.Count-1]).Length) - $startIndex
