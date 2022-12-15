@@ -13,12 +13,21 @@
 
     The name of the site being tested. For example: "Los Angeles" or "Site01".
 
+.PARAMETER Duration
+
+    The duration in seconds to run the media quality check. The default is 300 seconds.
+
 .EXAMPLE
 
-    .\Test-MicrosoftTeamsNetworkAssessment -Site "Site01"
+    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01
+
+.EXAMPLE
+
+    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
 #>
 Param(
-    [Parameter(mandatory=$true)][String]$Site
+    [Parameter(mandatory=$true)][String]$Site,
+    [Parameter(Mandatory = $false)][ValidateScript({$_ -gt 0})][Int]$Duration
 )
 $siteClean = ($site -replace " " -replace "`"").Trim()
 $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
@@ -29,7 +38,6 @@ Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\Micro
 Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
 Write-Host "`nInstalling the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
 Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
-Remove-Item -Path $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
 Write-Host "`nRunning the connectivity check. This may take a few minutes." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
 $startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
@@ -39,6 +47,20 @@ Move-Item $result -Destination $tempFolder
 Write-Host `n
 $hostOutput[0..($hostOutput.Count-2)]
 Write-Host "`nRunning the quality check. This should take 5 minutes." -ForegroundColor Cyan
+if ($duration) {
+        if ($duration -le 300) {
+        Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
+    } else {
+        Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
+        # Maybe add confirmation? Output warning to use Ctrl+C to abort?
+    }
+    $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
+    $oldDuration = (($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '')
+    Write-Host "Updating configuration - changing test duration from $oldDuration to $duration"
+    $i = $configFile.IndexOf(($configFile | Where-Object {$_ -like "*MediaDuration*"}))
+    $configFile[$i] = $configFile[$i] -replace '\d+',$duration
+    $configFile | Set-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
+}
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
 $startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
 $length = (($hostOutput[$hostOutput.Count-1]).Length) - $startIndex
@@ -58,6 +80,7 @@ Write-Host "Avg Loss Rate:   $([math]::Round((($lossRateArray | Measure-Object -
 Write-Host "Avg Latency:     $([math]::Round((($latencyArray | Measure-Object -Average).Average),2))"
 Write-Host "Avg Jitter Rate: $([math]::Round((($jitterArray | Measure-Object -Average).Average),2))"
 Write-Host "`nCall Quality Check Has Finished"
+Remove-Item -Path $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
 $zipPath = $tempFolder + "\TeamsNetAssessmentResults_" + $siteClean + "_" +(Get-Date -Format yyyyMMddHHmmssffff) + ".zip"
 $compress = @{
     LiteralPath = (Get-ChildItem -Path $tempFolder).FullName
