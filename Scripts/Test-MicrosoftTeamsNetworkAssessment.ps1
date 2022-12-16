@@ -60,6 +60,7 @@ Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\Micro
 Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
 Write-Host "`nInstalling the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
 Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+$configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
 Write-Host "`nRunning the connectivity check. This may take a few minutes." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
 $startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
@@ -75,7 +76,6 @@ if ($duration) {
         # Write-Host "`nThe duration of the quality check will be $duration seconds. The default is 300 seconds." -ForegroundColor Yellow
         # Maybe add confirmation? Output warning to use Ctrl+C to abort?
     }
-    $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
     $oldDuration = (($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '')
     Write-Host "`nUpdating configuration - changing test duration from $oldDuration to $duration"
     $i = $configFile.IndexOf(($configFile | Where-Object {$_ -like "*MediaDuration*"}))
@@ -113,11 +113,15 @@ $compress = @{
 }
 Compress-Archive @compress
 Write-Host "`nAll tests complete!" -ForegroundColor Green
-Write-Host "`nCopying results to $Destination"
-try {
-    Copy-Item -Path $zipPath -Destination $Destination -ErrorAction Stop
-    Write-Host "Results saved to $Destination`n" -ForegroundColor Green
-} catch {
-    Write-Host "`nError: $($Error[0])" -ForegroundColor Red
+if ($Destination ) {
+    Write-Host "`nCopying results to $Destination"
+    try {
+        Copy-Item -Path $zipPath -Destination $Destination -ErrorAction Stop
+        Write-Host "Results saved to $Destination`n" -ForegroundColor Green
+    } catch {
+        Write-Host "`nError: $($Error[0])" -ForegroundColor Red
+        Write-Host "Results saved to $zipPath`n"
+    }
+} else {
     Write-Host "Results saved to $zipPath`n"
 }
