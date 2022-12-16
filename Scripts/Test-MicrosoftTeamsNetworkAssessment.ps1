@@ -2,36 +2,41 @@
 .SYNOPSIS
 
     Downloads, installs, and runs the Microsoft Teams Network Assessment tool.
-    Adds all resulting files, including the normal console output, to a single ZIP on the users desktop.
+    Adds all resulting files, including the normal console output, to a single ZIP file.
+    Duration of the media quality check can be changed, and an output directory for the resulting files can be defined.
 
 .DESCRIPTION
 
     Downloads, installs, and runs the Microsoft Teams Network Assessment tool.
-    Adds all resulting files, including the normal console output, to a single ZIP on the users desktop.
+    Adds all resulting files, including the normal console output, to a single ZIP file.
+    Duration of the media quality check can be changed, and an output directory for the resulting files can be defined.
 
 .PARAMETER Site
 
-    The name of the site being tested. For example: "Los Angeles" or "Site01".
+    The name of the site being tested. For example: "Los Angeles" or "Site01". Used in naming the resulting files.
 
 .PARAMETER Duration
 
-    The duration in seconds to run the media quality check. The default is 300 seconds.
+    OPTIONAL - The duration in seconds to run the media quality check. The default is 300 seconds.
 
 .PARAMETER Destination
 
-    The destination directory to copy the results to.
+    OPTIONAL - The destination directory to copy the results to. Results are saved to temp directory regardless.
 
 .EXAMPLE
 
-    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01
+    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01
+    Runs the test using the existing configuration in NetworkAssessmentTool.exe.config.
 
 .EXAMPLE
 
-    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
+    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
+    Modifies the NetworkAssessmentTool.exe.config with the provided duration of 1 hour.
 
 .EXAMPLE
 
-    .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Destination "C:\Temp"
+    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 60 -Destination "C:\Temp"
+    Modifies the NetworkAssessmentTool.exe.config with the provided duration of 1 minute. Also saves the results to the C:\Temp directory.
 #>
 Param(
     [Parameter(mandatory=$true)][String]$Site,
