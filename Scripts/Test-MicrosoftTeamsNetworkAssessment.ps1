@@ -45,7 +45,8 @@ Param(
             throw "Path $_ is not valid"
         }})][string]$Destination 
 )
-$siteClean = ($site -replace " " -replace "`"").Trim()
+$invalidChars = "[{0}]" -f [regex]::Escape(([IO.Path]::GetInvalidFileNameChars() -join ''))
+$Site = ($Site -replace $invalidChars -replace " ").Trim()
 $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
 $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
 $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
@@ -98,7 +99,7 @@ Write-Host "Avg Latency:     $([math]::Round((($latencyArray | Measure-Object -A
 Write-Host "Avg Jitter Rate: $([math]::Round((($jitterArray | Measure-Object -Average).Average),2))"
 Write-Host "`nCall Quality Check Has Finished"
 Remove-Item -Path $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
-$zipFileName = ("TeamsNetAssessmentResults_" + $siteClean + "_" +(Get-Date -Format yyyyMMddHHmmssffff) + ".zip")
+$zipFileName = ("TeamsNetAssessmentResults_" + $Site + "_" +(Get-Date -Format yyyyMMddHHmmssffff) + ".zip")
 $zipPath = ($tempFolder + "\" + $zipFileName)
 $compress = @{
     LiteralPath = (Get-ChildItem -Path $tempFolder).FullName
