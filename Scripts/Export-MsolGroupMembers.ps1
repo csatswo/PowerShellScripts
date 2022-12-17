@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
- 
+
     Export-MsolGroupMembers.ps1 - Creates a CSV of groups and members
- 
+
 .DESCRIPTION
 
     Author: csatswo
@@ -60,6 +60,6 @@ foreach ($group in $groups) {
     }
 }
 
-$results | Sort-Object Group,MemberEmail | Select-Object Group,GroupType,Member,MemberEmail,MemberType | ft -AutoSize
+$results | Sort-Object Group,MemberEmail | Select-Object Group,GroupType,Member,MemberEmail,MemberType | Format-Table -AutoSize
 
 $results | Sort-Object Group,MemberEmail | Select-Object Group,GroupID,GroupType,Member,MemberEmail,MemberType | Export-Csv -Path $Path -NoTypeInformation

@@ -1,21 +1,21 @@
 ﻿<#
 
 .SYNOPSIS
- 
+
     Export-TeamsGuests.ps1 - Displays a list and exports a CSV of Teams guests
- 
+
 .DESCRIPTION
 
     Author: csatswo
 
     This script will output a list of the Teams guests in the terminal and will save a CSV of the results.
-    
+
 .LINK
 
     Github: https://github.com/csatswo/Export-TeamsGuests.ps1
- 
+
 .EXAMPLE 
-    
+
     .\Export-TeamsGuests.ps1 -Username admin@domain.onmicrosoft.com -Path C:\Temp\guests.csv    
 
         Displays a formatted table of Teams with guests and the guests of the Team.
@@ -34,51 +34,6 @@ Param(
     [Parameter(mandatory=$True)][String]$Username,
     [Parameter(mandatory=$True)][String]$Path
 )
-
-# Check for Teams module and install if missing
-
-if (Get-Module -ListAvailable -Name MicrosoftTeams) {
-    
-    Write-Host "`nTeams module is installed" -ForegroundColor Cyan
-    Import-Module MicrosoftTeams
-
-} else {
-
-    Write-Host "`nTeams module is not installed" -ForegroundColor Red
-    Write-Host "`nInstalling module..." -ForegroundColor Cyan
-    Install-Module MicrosoftTeams
-
-}
-
-# Check if Teams is connected
-
-function TeamsConnected {
-    
-    Get-CsOnlineSipDomain -ErrorAction SilentlyContinue | Out-Null
-    $result = $?
-    return $result
-
-}
-
-if (-not (TeamsConnected)) {
-
-    if (Get-Module -ListAvailable -Name MicrosoftTeams) {
-    
-        # Connect to Microsoft Teams
-        Write-Host "`nTeams module installed" -ForegroundColor Green
-        Import-Module MicrosoftTeams
-        Import-PSSession -Session (New-CsOnlineSession) | Out-Null
-    
-    } else {
-    
-        # Install module and connect to Microsoft Teams
-        Write-Host "`nTeams module is not installed" -ForegroundColor Yellow
-        Write-Host "`nInstalling module and creating PowerShell session..."
-        Install-Module MicrosoftTeams
-        Import-PSSession -Session (New-CsOnlineSession) | Out-Null
-    
-    }
-}
 
 # Start script loops
 
