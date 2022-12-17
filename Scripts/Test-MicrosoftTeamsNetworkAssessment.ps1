@@ -52,14 +52,73 @@ Param(
 )
 $invalidChars = "[{0}]" -f [regex]::Escape(([IO.Path]::GetInvalidFileNameChars() -join ''))
 $Site = ($Site -replace $invalidChars -replace " ").Trim()
-$downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
-$downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+# $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+# $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+# $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
+# Write-Host "`nDownloading the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
+# Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+# Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+# Write-Host "`nInstalling the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
+# Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
 $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
-Write-Host "`nDownloading the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
-Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
-Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
-Write-Host "`nInstalling the Microsoft Teams Network Assessment Tool..." -ForegroundColor Cyan
-Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+if (Get-Process | Where-Object {$_.ProcessName -eq "CExecSvc"}) {
+    # Probably running inside a Windows Sandbox (WSB)
+    # CimClass 'Win32_Product' doesn't seem to exist in WSB.
+    try {
+        $installed = Get-WmiObject -Query "SELECT * FROM Win32_InstalledWin32Program" | Where-Object {$_.Name -eq "Microsoft Teams Network Assessment Tool"} -ErrorAction Stop
+        if ($installed) {
+            if (($installed).Version -ge 1.4.0.0) {
+                Write-Host "`nTeams Network Assessment Tool is already installed" -ForegroundColor Green
+            } else {
+                Write-Host "`nOlder version of Teams Network Assessment Tool is installed" -ForegroundColor Yellow
+                Write-Host "Downloading and installing the Microsoft Teams Network Assessment Tool..."
+                $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+                $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+                Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+                Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+                Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+            }
+        } else {
+            Write-Host "`nTeams Network Assessment Tool is not installed" -ForegroundColor Yellow
+            Write-Host "Downloading and installing the Microsoft Teams Network Assessment Tool..."
+            $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+            $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+            Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+            Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+            Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+        }
+    } catch {
+        Write-Host "`nError: $($Error[0])" -ForegroundColor Red
+    }
+} else {
+    # Probably not running in WSB
+    try {
+        $installed = Get-WmiObject -Query "SELECT * FROM Win32_Product" | Where-Object {$_.Name -eq "Microsoft Teams Network Assessment Tool"} -ErrorAction Stop
+        if ($installed) {
+            if (($installed).Version -ge 1.4.0.0) {
+                Write-Host "`nTeams Network Assessment Tool is already installed" -ForegroundColor Green
+            } else {
+                Write-Host "`nOlder version of Teams Network Assessment Tool is installed" -ForegroundColor Yellow
+                Write-Host "Downloading and installing the Microsoft Teams Network Assessment Tool..."
+                $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+                $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+                Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+                Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+                Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+            }
+        } else {
+            Write-Host "`nTeams Network Assessment Tool is not installed" -ForegroundColor Yellow
+            Write-Host "Downloading and installing the Microsoft Teams Network Assessment Tool..."
+            $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+            $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+            Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+            Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+            Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+        }
+    } catch {
+        Write-Host "`nError: $($Error[0])" -ForegroundColor Red
+    }
+}
 $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
 Write-Host "`nRunning the connectivity check. This may take a few minutes." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
