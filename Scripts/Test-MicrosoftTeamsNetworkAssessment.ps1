@@ -104,10 +104,10 @@ if (([environment]::OSVersion.Version.Build -ge 22000) -and (Get-Process | Where
 $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
 Write-Host "`nRunning the connectivity check. This may take a few minutes." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
-$startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
+$startIndex = ($hostOutput[$hostOutput.Count-1]).IndexOf('C:\')
 $length = (($hostOutput[$hostOutput.Count-1]).Length) - $startIndex
-$result = ($hostOutput[$hostOutput.Count-1]).Substring($startIndex,$length)
-Move-Item $result -Destination $tempFolder
+$results = ($hostOutput[$hostOutput.Count-1]).Substring($startIndex,$length)
+Move-Item $results -Destination $tempFolder
 Write-Host `n
 $hostOutput[0..($hostOutput.Count-2)]
 if ($duration) {
@@ -126,19 +126,20 @@ if ($duration) {
 $durationMin = $([math]::Round(((($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '') / 60),1))
 Write-Host "`nRunning the connectivity check. This will take about $durationMin minute(s)." -ForegroundColor Cyan
 $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
-$startIndex = ($hostOutput[$hostOutput.Count-1]).indexof('C:\')
+$startIndex = ($hostOutput[$hostOutput.Count-1]).IndexOf('C:\')
 $length = (($hostOutput[$hostOutput.Count-1]).Length) - $startIndex
-$result = ($hostOutput[$hostOutput.Count-1]).Substring($startIndex,$length)
-Move-Item $result -Destination $tempFolder
-$metrics = $hostOutput | Where-Object {$_ -like '*Loss Rate:*'}
+$resultsCsv = Get-Item ($hostOutput[$hostOutput.Count-1]).Substring($startIndex,$length)
+$results = Import-Csv $resultsCsv.FullName
 $lossRateArray = @()
 $latencyArray = @()
 $jitterArray = @()
-foreach ($metric in $metrics) {
-    $lossRateArray += [double]($metric.Substring(($metric.IndexOf('Loss Rate') +11),5)).Trim()
-    $latencyArray += [double]($metric.Substring(($metric.IndexOf('Latency') +9),5)).Trim()
-    $jitterArray += [double]($metric.Substring(($metric.IndexOf('Jitter') +8),5)).Trim()
+foreach ($result in $results) {
+    $lossRateArray += [double]($result.'LossRate-%')
+    $latencyArray += [double]($result.'AverageLatency-Ms')
+    $jitterArray += [double]($result.'AverageJitter-Ms')
+    $result | Add-Member -NotePropertyName 'Site' -NotePropertyValue $Site
 }
+$results | Export-Csv -Path ($tempFolder + "\" + $resultsCsv.Name) -NoTypeInformation
 Write-Host "`nAverage Call Quality Metrics:`n"
 Write-Host "Avg Loss Rate:   $([math]::Round((($lossRateArray | Measure-Object -Average).Average),2))"
 Write-Host "Avg Latency:     $([math]::Round((($latencyArray | Measure-Object -Average).Average),2))"
@@ -157,11 +158,11 @@ if ($Destination ) {
     Write-Host "`nCopying results to $Destination"
     try {
         Copy-Item -Path $zipPath -Destination $Destination -ErrorAction Stop
-        Write-Host "Results saved to $Destination`n" -ForegroundColor Green
+        Write-Output "Results saved to $Destination`n"
     } catch {
-        Write-Host "`nError: $($Error[0])" -ForegroundColor Red
-        Write-Host "Results saved to $zipPath`n"
+        Write-Error $($Error[0])
+        Write-Output "Results saved to $zipPath`n"
     }
 } else {
-    Write-Host "Results saved to $zipPath`n"
+    Write-Output "Results saved to $zipPath`n"
 }
