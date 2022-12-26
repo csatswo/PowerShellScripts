@@ -69,7 +69,7 @@ if (([environment]::OSVersion.Version.Build -ge 22000) -and (Get-Process | Where
     try {
         $installed = Get-WmiObject -Query "SELECT * FROM Win32_InstalledWin32Program" | Where-Object {$_.Name -eq "Microsoft Teams Network Assessment Tool"} -ErrorAction Stop
         if ($installed) {
-            if (($installed).Version -ge 1.4.0.0) {
+            if (($installed).Version -ge 1.4) {
                 Write-Host "Teams Network Assessment Tool is already installed." -ForegroundColor Green
             } else {
                 Write-Host "Older version of Teams Network Assessment Tool is installed." -ForegroundColor Yellow
@@ -87,7 +87,7 @@ if (([environment]::OSVersion.Version.Build -ge 22000) -and (Get-Process | Where
     try {
         $installed = Get-WmiObject -Query "SELECT * FROM Win32_Product" | Where-Object {$_.Name -eq "Microsoft Teams Network Assessment Tool"} -ErrorAction Stop
         if ($installed) {
-            if (($installed).Version -ge 1.4.0.0) {
+            if (($installed).Version -ge 1.4) {
                 Write-Host "Teams Network Assessment Tool is already installed." -ForegroundColor Green
             } else {
                 Write-Host "Older version of Teams Network Assessment Tool is installed." -ForegroundColor Yellow

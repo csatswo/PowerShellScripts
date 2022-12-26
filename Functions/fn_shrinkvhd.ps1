@@ -1,3 +1,96 @@
+Function ShrinkVHDX {
+    [cmdletbinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$true)]$VHDX
+    )
+    Process {
+        try {
+            $results = @()
+            $file = Get-Item $VHDX
+            $before = [double]((Measure-Object -InputObject $file.Length -Sum).Sum / 1GB)
+            Mount-VHD -Path $file.FullName -NoDriveLetter -ReadOnly
+            Optimize-VHD -Path $file.FullName -Mode Full
+            Optimize-VHD -Path $file.FullName -Mode Full
+            Optimize-VHD -Path $file.FullName -Mode Full
+            Dismount-VHD -Path $file.FullName
+            $file = Get-Item $VHDX
+            $after = [double]((Measure-Object -InputObject $file.Length -Sum).Sum / 1GB)
+            $results += [PSCustomObject]@{
+                VHDX   = $file.FullName 
+                Before = $([math]::Round($before,2))
+                After  = $([math]::Round($after,2))
+                Shrunk = $([math]::Round(($before - $after),2))
+            }
+        } catch {
+            $Error[0]
+        }
+    }
+    End {
+        Return $results | Select-Object VHDX,Before,After,Shrunk
+    }
+}
+Function ShrinkVM {
+    [cmdletbinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$true)]$Name
+    )
+    Process {
+        try {
+            $results = @()
+            $vm = Get-VM -Name $Name
+            $hardDrives = $vm.HardDrives
+            if ($hardDrives) {
+                if ($vm.State -eq "Running") {
+                    if ((Read-Host -Prompt "$($vm.Name) is running. Enter `'Y`' to shutdown or anything else to skip.") -like "y") {
+                        Stop-VM -Name $vm.Name
+                        foreach ($hardDrivePath in $hardDrives.Path) {
+                            $driveResults = ShrinkVHDX -VHDX $hardDrivePath
+                            $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
+                            $results += $driveResults
+                        }
+                    } else {
+                        Write-Warning -Message "Skipping $($vm.Name)"
+                    }
+                } else {
+                    foreach ($hardDrivePath in $hardDrives.Path) {
+                        $driveResults = ShrinkVHDX -VHDX $hardDrivePath
+                        $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
+                        $results += $driveResults
+                    }
+                }
+            } else {
+                Write-Warning "No drives attached to $($vm.Name)"
+            }
+        } catch {
+            $Error[0]
+        }
+    }
+    End {
+        Return $results | Select-Object Name,VHDX,Before,After,Shrunk
+    }
+}
+Function ShrinkAllVM {
+    Process {
+        try {
+            $results = @()
+            $directories = @()
+            $virtualMachines = Get-VM
+            foreach ($vm in $virtualMachines) {
+                $results += ShrinkVM -Name $vm.Name
+            }
+        } catch {
+            $Error[0]
+        }
+    }
+    End {
+        Write-Host "`nShrink complete. Total shrinkage is $([math]::Round((($results.Shrunk | Measure-Object -Average).Average),2)) GB."
+        Return $results | Select-Object Name,VHDX,Before,After,Shrunk | ft -AutoSize
+    }
+}
+
+<#
+Older stuff
+
 Function shrinkvhd {
     $totalDriveUsageBefore = 0
     $totalDriveUsageAfter = 0
@@ -23,28 +116,53 @@ Function shrinkvhd {
                 if ($runningPrompt -eq "y") {
                     Write-Host "Stopping $($virtualMachine.Name)..."
                     Stop-VM -Name $virtualMachine.Name
-                }
-            }
-            if ($virtualMachineVHDXs) {
-                foreach ($virtualMachineDrive in $virtualMachineVHDXs) {
-                    $driveUsageBefore = 0
-                    $driveUsageAfter = 0
-                    $driveUsageBefore += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
-                    Write-Host "    Shrinking $virtualMachineDrive" -ForegroundColor Yellow
-                    Mount-VHD -Path $virtualMachineDrive -NoDriveLetter -ReadOnly
-                    Optimize-VHD -Path $virtualMachineDrive -Mode Full
-                    Optimize-VHD -Path $virtualMachineDrive -Mode Full
-                    Optimize-VHD -Path $virtualMachineDrive -Mode Full
-                    Dismount-VHD -Path $virtualMachineDrive
-                    $driveUsageAfter += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
-                    Write-Host "    Before: $([math]::Round($driveUsageBefore,2)) GB`n    After:  $([math]::Round($driveUsageAfter,2)) GB"
-                    Write-Host "    Shrunk: $([math]::Round(($driveUsageBefore - $driveUsageAfter),2)) GB"
+                    if ($virtualMachineVHDXs) {
+                        foreach ($virtualMachineDrive in $virtualMachineVHDXs) {
+                            $driveUsageBefore = 0
+                            $driveUsageAfter = 0
+                            $driveUsageBefore += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                            Write-Host "    Shrinking $virtualMachineDrive" -ForegroundColor Yellow
+                            Mount-VHD -Path $virtualMachineDrive -NoDriveLetter -ReadOnly
+                            Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                            Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                            Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                            Dismount-VHD -Path $virtualMachineDrive
+                            $driveUsageAfter += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                            Write-Host "    Before: $([math]::Round($driveUsageBefore,2)) GB`n    After:  $([math]::Round($driveUsageAfter,2)) GB"
+                            Write-Host "    Shrunk: $([math]::Round(($driveUsageBefore - $driveUsageAfter),2)) GB"
+                        }
+                    } else {
+                        foreach ($virtualMachineDrive in $virtualMachineVHDs) {
+                            Write-Host "    Non shrinkable drive $virtualMachineDrive" -ForegroundColor Red
+                            $driveUsage = ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                            Write-Host "    Size:   $([math]::Round($driveUsage,2)) GB"
+                        }
+                    }
+                } else {
+                    Write-Host "Skipping $($virtualMachine.Name)..."                   
                 }
             } else {
-                foreach ($virtualMachineDrive in $virtualMachineVHDs) {
-                    Write-Host "    Non shrinkable drive $virtualMachineDrive" -ForegroundColor Red
-                    $driveUsage = ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
-                    Write-Host "    Size:   $([math]::Round($driveUsage,2)) GB"
+                if ($virtualMachineVHDXs) {
+                    foreach ($virtualMachineDrive in $virtualMachineVHDXs) {
+                        $driveUsageBefore = 0
+                        $driveUsageAfter = 0
+                        $driveUsageBefore += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                        Write-Host "    Shrinking $virtualMachineDrive" -ForegroundColor Yellow
+                        Mount-VHD -Path $virtualMachineDrive -NoDriveLetter -ReadOnly
+                        Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                        Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                        Optimize-VHD -Path $virtualMachineDrive -Mode Full
+                        Dismount-VHD -Path $virtualMachineDrive
+                        $driveUsageAfter += ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                        Write-Host "    Before: $([math]::Round($driveUsageBefore,2)) GB`n    After:  $([math]::Round($driveUsageAfter,2)) GB"
+                        Write-Host "    Shrunk: $([math]::Round(($driveUsageBefore - $driveUsageAfter),2)) GB"
+                    }
+                } else {
+                    foreach ($virtualMachineDrive in $virtualMachineVHDs) {
+                        Write-Host "    Non shrinkable drive $virtualMachineDrive" -ForegroundColor Red
+                        $driveUsage = ((Measure-Object -InputObject (Get-Item $virtualMachineDrive).Length -Sum).Sum / 1GB)
+                        Write-Host "    Size:   $([math]::Round($driveUsage,2)) GB"
+                    }
                 }
             }
         } else {
@@ -76,3 +194,4 @@ Function shrinkvhd {
     Write-Host "Drive usage before was: $([math]::Round($totalDriveUsageBefore,2)) GB`nDrive usage after was:  $([math]::Round($totalDriveUsageAfter,2)) GB"
     Write-Host "Total saved:            $([math]::Round(($totalDriveUsageBefore - $totalDriveUsageAfter),2)) GB"
 }
+#>
