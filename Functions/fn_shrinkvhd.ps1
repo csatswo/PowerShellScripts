@@ -88,6 +88,7 @@ Function ShrinkAllVM {
         try {
             $results = @()
             $directories = @()
+            $discoveredVhdx = @()
             $virtualMachines = Get-VM
             if (-not $AutoStop) {
                 foreach ($vm in $virtualMachines) {
@@ -103,6 +104,16 @@ Function ShrinkAllVM {
         }
     }
     End {
+        $directories = (($results.VHDX | ForEach-Object {Get-Item -Path $_}).DirectoryName | Select-Object -Unique)
+        foreach ($directory in $directories) {
+            $discoveredVhdx += (Get-ChildItem -LiteralPath $directory | Where-Object {$_.Extension -eq ".vhdx"}).FullName
+        }
+        foreach ($vhdx in $discoveredVhdx) {
+            if ($results.VHDX -notcontains $vhdx) {
+                Write-Host `n
+                Write-Warning -Message "Unattached VHDX found: $vhdx"
+            }
+        }
         Write-Host "`nShrink complete. Total shrinkage is $([math]::Round((($results.Shrunk | Measure-Object -Average).Average),2)) GB."
         Return $results | Select-Object Name,VHDX,Before,After,Shrunk | ft -AutoSize
     }
