@@ -32,7 +32,8 @@ Function ShrinkVHDX {
 Function ShrinkVM {
     [cmdletbinding()]
     param(
-        [parameter(Mandatory=$true,ValueFromPipeline=$true)]$Name
+        [parameter(Mandatory=$true,ValueFromPipeline=$true)]$Name,
+        [parameter(Mandatory=$false,ValueFromPipeline=$true)][switch]$AutoStop
     )
     Process {
         try {
@@ -41,15 +42,24 @@ Function ShrinkVM {
             $hardDrives = $vm.HardDrives
             if ($hardDrives) {
                 if ($vm.State -eq "Running") {
-                    if ((Read-Host -Prompt "$($vm.Name) is running. Enter `'Y`' to shutdown or anything else to skip.") -like "y") {
+                    if (-not $AutoStop) {
+                        if ((Read-Host -Prompt "$($vm.Name) is running. Enter `'Y`' to shutdown or anything else to skip.") -like "y") {
+                            Stop-VM -Name $vm.Name
+                            foreach ($hardDrivePath in $hardDrives.Path) {
+                                $driveResults = ShrinkVHDX -VHDX $hardDrivePath
+                                $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
+                                $results += $driveResults
+                            }
+                        } else {
+                            Write-Warning -Message "Skipping $($vm.Name)"
+                        }
+                    } else {
                         Stop-VM -Name $vm.Name
                         foreach ($hardDrivePath in $hardDrives.Path) {
                             $driveResults = ShrinkVHDX -VHDX $hardDrivePath
                             $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
                             $results += $driveResults
-                        }
-                    } else {
-                        Write-Warning -Message "Skipping $($vm.Name)"
+                        }                        
                     }
                 } else {
                     foreach ($hardDrivePath in $hardDrives.Path) {
@@ -70,13 +80,23 @@ Function ShrinkVM {
     }
 }
 Function ShrinkAllVM {
+    [cmdletbinding()]
+    param(
+        [parameter(Mandatory=$false)][switch]$AutoStop
+    )
     Process {
         try {
             $results = @()
             $directories = @()
             $virtualMachines = Get-VM
-            foreach ($vm in $virtualMachines) {
-                $results += ShrinkVM -Name $vm.Name
+            if (-not $AutoStop) {
+                foreach ($vm in $virtualMachines) {
+                    $results += ShrinkVM -Name $vm.Name
+                }
+            } else {
+                foreach ($vm in $virtualMachines) {
+                    $results += ShrinkVM -Name $vm.Name -AutoStop
+                }            
             }
         } catch {
             $Error[0]
