@@ -46,6 +46,7 @@ Function ShrinkVM {
                         if ((Read-Host -Prompt "$($vm.Name) is running. Enter `'Y`' to shutdown or anything else to skip.") -like "y") {
                             Stop-VM -Name $vm.Name
                             foreach ($hardDrivePath in $hardDrives.Path) {
+                                Write-Verbose -Message "Shrinking $hardDrivePath"
                                 $driveResults = ShrinkVHDX -VHDX $hardDrivePath
                                 $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
                                 $results += $driveResults
@@ -56,6 +57,7 @@ Function ShrinkVM {
                     } else {
                         Stop-VM -Name $vm.Name
                         foreach ($hardDrivePath in $hardDrives.Path) {
+                            Write-Verbose -Message "Shrinking $hardDrivePath"
                             $driveResults = ShrinkVHDX -VHDX $hardDrivePath
                             $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
                             $results += $driveResults
@@ -63,6 +65,7 @@ Function ShrinkVM {
                     }
                 } else {
                     foreach ($hardDrivePath in $hardDrives.Path) {
+                        Write-Verbose -Message "Shrinking $hardDrivePath"
                         $driveResults = ShrinkVHDX -VHDX $hardDrivePath
                         $driveResults | Add-Member -NotePropertyName "Name" -NotePropertyValue $($vm.Name)
                         $results += $driveResults
@@ -91,11 +94,11 @@ Function ShrinkAllVM {
             $virtualMachines = Get-VM
             if (-not $AutoStop) {
                 foreach ($vm in $virtualMachines) {
-                    $results += ShrinkVM -Name $vm.Name
+                    $results += ShrinkVM -Name $vm.Name -Verbose
                 }
             } else {
                 foreach ($vm in $virtualMachines) {
-                    $results += ShrinkVM -Name $vm.Name -AutoStop
+                    $results += ShrinkVM -Name $vm.Name -AutoStop -Verbose
                 }            
             }
         } catch {
