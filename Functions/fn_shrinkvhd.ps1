@@ -117,7 +117,7 @@ Function ShrinkAllVM {
                 Write-Warning -Message "Unattached VHDX found: $vhdx"
             }
         }
-        Write-Host "`nShrink complete. Total shrinkage is $(($results.Shrunk | Measure-Object -Sum).Count) GB."
+        Write-Host "`nShrink complete. Total shrinkage is $(($results.Shrunk | Measure-Object -Sum).Sum) GB."
         Return $results | Select-Object Name,VHDX,Before,After,Shrunk | ft -AutoSize
     }
 }
