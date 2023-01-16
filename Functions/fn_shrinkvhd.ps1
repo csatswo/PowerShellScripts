@@ -39,7 +39,7 @@ Function ShrinkVM {
         try {
             $results = @()
             $vm = Get-VM -Name $Name
-            $hardDrives = $vm.HardDrives
+            $hardDrives = ($vm.HardDrives | Where-Object {$vm.HardDrives.Path -like "*.vhdx"})
             if ($hardDrives) {
                 if ($vm.State -eq "Running") {
                     if (-not $AutoStop) {
@@ -72,7 +72,7 @@ Function ShrinkVM {
                     }
                 }
             } else {
-                Write-Warning "No drives attached to $($vm.Name)"
+                Write-Warning "No eligible drives attached to $($vm.Name)"
             }
         } catch {
             $Error[0]
