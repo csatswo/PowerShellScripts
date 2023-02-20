@@ -11,6 +11,15 @@
         $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"} | Sort-Object
         if ($msolUser.IsLicensed -eq $true) {
             $licenses = $msolUser.Licenses.AccountSkuId
+            if ($csOnlineUser.AssignedPlan) {
+                $assignedPlans = @()
+                foreach ($assignedPlan in $csOnlineUser.AssignedPlan) {
+                    $assignedPlans += [PSCustomObject]@{
+                        Capability = $assignedPlan.Capability
+                        CapabilityStatus = $assignedPlan.CapabilityStatus
+                    }
+                }
+            }
         } else {
             $licenses = $null
         }
