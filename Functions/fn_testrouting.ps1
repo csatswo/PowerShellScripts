@@ -5,6 +5,11 @@
     $UserReturned = Get-CsOnlineUser -Identity $User -ErrorAction SilentlyContinue
     if ($UserReturned) {
         Write-Host "`nGetting Effective Tenant Dial Plan for $User and translating number..."
+        if ($UserReturned.TenantDialPlan) {
+            Write-Host "Dial Plans assigned to $user are: `'$($UserReturned.TenantDialPlan + ", " + $UserReturned.DialPlan + " `(Usage Location`)")`'" -ForegroundColor Green
+        } else {
+            Write-Host "Dial Plans assigned to $user are: $("`'Global, " + $UserReturned.DialPlan + " `(Usage Location`)`'")" -ForegroundColor Green
+        }
         $NormalisedResult = Test-CsEffectiveTenantDialPlan -DialedNumber $DialedNumber -Identity $User
             if ($NormalisedResult.TranslatedNumber) {
             Write-Host "`n$DialedNumber translated to $($NormalisedResult.TranslatedNumber)" -ForegroundColor Green
@@ -18,9 +23,10 @@
         $UserOnlineVoiceRoutingPolicy = ($UserReturned).OnlineVoiceRoutingPolicy
         if ($UserOnlineVoiceRoutingPolicy.Name) {
             Write-Host "`rOnline Voice Routing Policy assigned to $user is: '$UserOnlineVoiceRoutingPolicy'" -ForegroundColor Green
-            $PSTNUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity $UserOnlineVoiceRoutingPolicy).OnlinePstnUsages #($UserOnlineVoiceRoutingPolicy).Name).OnlinePstnUsages
+            $PSTNUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity $UserOnlineVoiceRoutingPolicy).OnlinePstnUsages
+            $AllVoiceRoutes = Get-CsOnlineVoiceRoute
             foreach ($PSTNUsage in $PSTNUsages) {
-                $VoiceRoutes += Get-CsOnlineVoiceRoute | Where-Object {$_.OnlinePstnUsages -contains $PSTNUsage} | Select-Object *,@{label="PSTNUsage"; Expression= {$PSTNUsage}}
+                $VoiceRoutes += $AllVoiceRoutes | Where-Object {$_.OnlinePstnUsages -contains $PSTNUsage} | Select-Object *,@{label="PSTNUsage"; Expression= {$PSTNUsage}}
             }
             Write-Host "`nFinding the first PSTN Usage with a Voice Route that matches $NormalisedNumber..."
             $MatchedVoiceRoutes = $VoiceRoutes | Where-Object {$NormalisedNumber -match $_.NumberPattern}
