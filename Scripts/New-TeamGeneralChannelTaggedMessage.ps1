@@ -10,39 +10,34 @@
     Author: csatswo
     Adds the account as an owner of the Team and posts a message in the 'General' channel.
     Created for the purpose of notifying members that the Team is being migrated and no changes should be made.
-    The optional 'Message' parameter can be used to define a custom message, otherwise only an '@' tag of the Team is posted.
+    The 'Message' parameter is used to define a custom message.
 
-.PARAMETER Account
-
-    The UserPrincipalName of the account. This should also be the account used with 'Connect-MgGraph'.
-    
 .PARAMETER GroupId
 
     The group ID of the Team
 
-.PARAMETER Importance
+.PARAMETER Message
+
+    The body of the message to be posted in the channel.
+
+    .PARAMETER Importance
 
     OPTIONAL: If not used, the message will be posted with 'normal' importance.  Valid options are 'normal', 'high', and 'urgent'.
 
-.PARAMETER Message
+.EXAMPLE
 
-    OPTIONAL: For defining a custom message. If not used, only an '@' tag of the Team is posted.
+    .\New-TeamGeneralChannelTaggedMessage -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF"
 
 .EXAMPLE
 
-    .\New-TeamGeneralChannelTaggedMessage -Account "MigrationWiz@example.com" -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF"
-
-.EXAMPLE
-
-    .\New-TeamGeneralChannelTaggedMessage -Account "MigrationWiz@example.com" -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF" -Message "Hello World" -Importance "High"
+    .\New-TeamGeneralChannelTaggedMessage -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF" -Message "Hello World" -Importance "High"
 
 #>
 #Requires -Modules Microsoft.Graph.Teams,Microsoft.Graph.Users
 Param(
-    [parameter(Mandatory=$true,ValueFromPipeline=$true)][string]$Account,
     [parameter(Mandatory=$true,ValueFromPipeline=$true)][ValidateScript({[guid]::TryParse($_,$([ref][guid]::Empty))})][string]$GroupId,
-    [parameter(Mandatory=$false,ValueFromPipeline=$true)][ValidateScript({$_ -match "Normal|High|Urgent"})][string]$Importance,
-    [parameter(Mandatory=$false,ValueFromPipeline=$true)][string]$Message
+    [parameter(Mandatory=$true,ValueFromPipeline=$true)][string]$Message,
+    [parameter(Mandatory=$false,ValueFromPipeline=$true)][ValidateScript({$_ -match "Normal|High|Urgent"})][string]$Importance
 )
 try {
     $scopes = @(
@@ -62,8 +57,9 @@ try {
     }
     else {
         Connect-MgGraph -Scopes $scopes | Out-Null
+        $mgContext = Get-MgContext
     }
-    $mgUser = (Get-MgUser -UserId $Account)
+    $mgUser = (Get-MgUser -UserId $mgContext.Account)
     $team = Get-MgTeam -TeamId $GroupId
     $generalChannel = Get-MgTeamChannel -TeamId $team.Id -Filter "DisplayName eq 'General'"
     $teamOwners = Get-MgTeamMember -TeamId $GroupId | Where-Object {$_.Roles -contains "owner"}
