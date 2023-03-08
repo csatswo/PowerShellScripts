@@ -20,7 +20,7 @@
 
     The body of the message to be posted in the channel.
 
-    .PARAMETER Importance
+.PARAMETER Importance
 
     OPTIONAL: If not used, the message will be posted with 'normal' importance.  Valid options are 'normal', 'high', and 'urgent'.
 
