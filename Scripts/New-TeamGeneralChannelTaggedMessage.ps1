@@ -26,7 +26,7 @@
 
 .EXAMPLE
 
-    .\New-TeamGeneralChannelTaggedMessage -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF"
+    .\New-TeamGeneralChannelTaggedMessage -GroupID "01234567-89AB-CDEF-0123-456789ABCDEF" -Message "Hello World"
 
 .EXAMPLE
 
