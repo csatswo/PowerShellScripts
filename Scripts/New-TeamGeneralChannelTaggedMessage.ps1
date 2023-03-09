@@ -42,7 +42,7 @@ Param(
 try {
     $scopes = @(
         "User.Read.All",
-        "TeamMember.Read.All",
+        "TeamMember.ReadWrite.All",
         "Group.ReadWrite.All",
         "ChannelMessage.Send"
     )
