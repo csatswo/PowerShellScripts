@@ -5,32 +5,27 @@
     )
     $userProperties = @()
     try {
-        $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction Stop
         $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction Stop
         $groupPolicyAssignments = EnumGroupPolicyAssignment
         $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"} | Sort-Object
-        if ($msolUser.IsLicensed -eq $true) {
-            $licenses = $msolUser.Licenses.AccountSkuId
-            if ($csOnlineUser.AssignedPlan) {
-                $assignedPlans = @()
-                foreach ($assignedPlan in $csOnlineUser.AssignedPlan) {
-                    $assignedPlans += [PSCustomObject]@{
-                        Capability = $assignedPlan.Capability
-                        CapabilityStatus = $assignedPlan.CapabilityStatus
-                    }
+        if ($csOnlineUser.AssignedPlan) {
+            $assignedPlans = @()
+            foreach ($assignedPlan in $csOnlineUser.AssignedPlan) {
+                $assignedPlans += [PSCustomObject]@{
+                    Capability = $assignedPlan.Capability
+                    CapabilityStatus = $assignedPlan.CapabilityStatus
+                    ServicePlanId = $assignedPlan.ServicePlanId
                 }
             }
-        } else {
-            $licenses = $null
         }
-        if ($Join -eq $true) {
-            if ($userGroupPolicyAssignments) {
-                Write-Warning -Message "Unable to Join - Group policy assignments exist for $($csOnlineUser.DisplayName)."
-            } else {
-                Write-Host "Enter the join character(s): " -ForegroundColor Cyan -NoNewline
-                $joinChars = Read-Host
-                $licenses = (($licenses | Sort-Object) -join "$joinChars")
-            }
+        else {
+            $assignedPlans = $null
+        }
+        if ($csOnlineUser.LineUri) {
+            $numberType = (Get-CsPhoneNumberAssignment -TelephoneNumber ($csOnlineUser.LineUri -replace "tel:")).NumberType
+        }
+        else {
+            $numberType = $null
         }
         $userProperties = [PSCustomObject]@{
             DisplayName = $csOnlineUser.DisplayName
@@ -39,6 +34,7 @@
             EnterpriseVoiceEnabled = $csOnlineUser.EnterpriseVoiceEnabled
             OnPremLineURI = $csOnlineUser.OnPremLineURI
             LineUri = $csOnlineUser.LineUri
+            NumberType = $numberType
             OnlineVoiceRoutingPolicy = $csOnlineUser.OnlineVoiceRoutingPolicy
             TenantDialPlan = $csOnlineUser.TenantDialPlan
             TeamsCallingPolicy = $csOnlineUser.TeamsCallingPolicy
@@ -47,12 +43,11 @@
             TeamsUpgradeEffectiveMode = $csOnlineUser.TeamsUpgradeEffectiveMode
             RegistrarPool = $csOnlineUser.RegistrarPool
             UsageLocation = $csOnlineUser.UsageLocation
-            isLicensed = $msolUser.isLicensed
-            Licenses = $licenses
-            ObjectId = $msolUser.ObjectId
+            AssignedPlan = $assignedPlans
+            Identity = $csOnlineUser.Identity
             GroupPolicyAssignments = $userGroupPolicyAssignments
         }
-        $userProperties | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,isLicensed,Licenses,ObjectId,GroupPolicyAssignments
+        $userProperties | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,NumberType,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,AssignedPlan,Identity,GroupPolicyAssignments
     } catch {
         Write-Host $_.Exception.Message -ForegroundColor Red
     }

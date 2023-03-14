@@ -4,8 +4,8 @@
         [Parameter(mandatory=$false)][Bool]$Join
     )
     try {
-        $msolUser = Get-MsolUser -UserPrincipalName $UserPrincipalName -ErrorAction Stop
-        $proxyAddresses = $msolUser.ProxyAddresses
+        $azureADUser = Get-AzureADUser -Filter "userPrincipalName eq '$UserPrincipalName'" -ErrorAction Stop
+        $proxyAddresses = $azureADUser.ProxyAddresses
         $primarySMTP = (($proxyAddresses | ? {$_ -clike "SMTP*"}) -replace "SMTP:")
         if ($Join -eq $true) {
             Write-Host "Enter the join character(s): " -ForegroundColor Cyan -NoNewline
@@ -15,9 +15,9 @@
             $otherSMTP = (($proxyAddresses | ? {$_ -clike "smtp*"}) -replace "smtp:" | Sort-Object)
         }
         $results += [PSCustomObject]@{
-            UserType = $msolUser.UserType
-            DisplayName = $msolUser.DisplayName
-            UserPrincipalName = $msolUser.UserPrincipalName
+            UserType = $azureADUser.UserType
+            DisplayName = $azureADUser.DisplayName
+            UserPrincipalName = $azureADUser.UserPrincipalName
             PrimarySMTP = $primarySMTP
             OtherSMTP = $otherSMTP
             }
@@ -32,7 +32,7 @@ function SMTPTenantAddressDump {
     )
     Write-Warning -Message "This will run for every user and can be extremely slow."
     Read-Host -Prompt "Press `'Enter`' to proceed"
-    $allUsers = Get-MsolUser -All
+    $allUsers = Get-AzureADUser -All $true
     $results = @()
     foreach ($user in $allUsers) {
         $proxyAddresses = $user.ProxyAddresses
