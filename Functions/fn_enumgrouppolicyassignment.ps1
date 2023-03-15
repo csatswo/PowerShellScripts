@@ -6,7 +6,7 @@
     $groupPolicyAssignments = Get-CsGroupPolicyAssignment
     foreach ($groupPolicyAssignment in $groupPolicyAssignments) {
         $group = Get-MsolGroup -ObjectId $groupPolicyAssignment.GroupId
-        $groupMembers = Get-MsolGroupMember -GroupObjectId $groupPolicyAssignment.GroupId
+        $groupMembers = Get-MsolGroupMember -All -GroupObjectId $groupPolicyAssignment.GroupId
         if ($groupMembers) {
             foreach ($groupMember in $groupMembers)  {
                 $results += [PSCustomObject]@{
