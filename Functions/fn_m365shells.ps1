@@ -52,7 +52,26 @@ Function m365 {
 
 Function refreshM365 {
     $modules = @("AzureADPreview","ExchangeOnlineManagement","Microsoft.Online.SharePoint.PowerShell","MicrosoftTeams","MSOnline")
+    $modulesGraph = @("Microsoft.Graph.Authentication","Microsoft.Graph.Teams","Microsoft.Graph.Users")
     foreach ($moduleName in $modules) {
+        $installedModule = Get-Module -ListAvailable -Name $moduleName
+        $availableModule = Find-Module -Repository PSGallery -Name $moduleName
+        if ($installedModule) {
+            if ($installedModule.Version -lt $availableModule.Version) {
+                Write-Host "`n$($installedModule.Name) version is $($installedModule.Version)" -ForegroundColor Yellow
+                Write-Host "Updating module to version $($availableModule.Version)" -ForegroundColor Yellow
+                Uninstall-Module -Name $installedModule.Name
+                Install-Module -Repository PSGallery -Name $availableModule.Name
+            } else {
+                Write-Host "`n$moduleName"
+                Write-Host "Installed version is latest `($($installedModule.Version)`)" -ForegroundColor Green
+            }
+        } else {
+            Write-Host "$($availableModule.Name) is not installed. Installing now..." -ForegroundColor Yellow
+            Install-Module -Repository PSGallery -Name $availableModule.Name            
+        }
+    }
+    foreach ($moduleName in $modulesGraph) {
         $installedModule = Get-Module -ListAvailable -Name $moduleName
         $availableModule = Find-Module -Repository PSGallery -Name $moduleName
         if ($installedModule) {
