@@ -52,7 +52,7 @@ Function m365 {
 
 Function refreshM365 {
     $modules = @("AzureADPreview","ExchangeOnlineManagement","Microsoft.Online.SharePoint.PowerShell","MicrosoftTeams","MSOnline")
-    $modulesGraph = @("Microsoft.Graph.Authentication","Microsoft.Graph.Teams","Microsoft.Graph.Users")
+    $modulesGraph = @("Microsoft.Graph.Teams","Microsoft.Graph.Users")
     foreach ($moduleName in $modules) {
         $installedModule = Get-Module -ListAvailable -Name $moduleName
         $availableModule = Find-Module -Repository PSGallery -Name $moduleName
@@ -69,6 +69,22 @@ Function refreshM365 {
         } else {
             Write-Host "$($availableModule.Name) is not installed. Installing now..." -ForegroundColor Yellow
             Install-Module -Repository PSGallery -Name $availableModule.Name            
+        }
+    }
+    $graphAuthModule = "Microsoft.Graph.Authentication"
+    $installedGraphAuthModule = (Get-Module -ListAvailable -Name $graphAuthModule | Sort-Object Version -Descending | Select-Object -First 1)
+    $availableGraphAuthModule = Find-Module -Repository PSGallery -Name $graphAuthModule
+    if (-not $installedGraphAuthModule) {
+        Write-Host "$($availableGraphAuthModule.Name) is not installed. Installing now..." -ForegroundColor Yellow
+        Install-Module -Repository PSGallery -Name $availableGraphAuthModule.Name
+    } else {
+        if ($installedGraphAuthModule.Version -lt $availableGraphAuthModule.Version) {
+            Write-Host "`n$($installedGraphAuthModule.Name) version is $($installedGraphAuthModule.Version)" -ForegroundColor Yellow
+            Write-Host "Updating module to version $($availableGraphAuthModule.Version)" -ForegroundColor Yellow
+            Update-Module -Name $installedGraphAuthModule.Name
+        } else {
+            Write-Host "`n$graphAuthModule"
+            Write-Host "Installed version is latest `($($installedGraphAuthModule.Version)`)" -ForegroundColor Green
         }
     }
     foreach ($moduleName in $modulesGraph) {
