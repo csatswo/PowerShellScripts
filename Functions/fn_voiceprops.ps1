@@ -1,7 +1,6 @@
 ﻿function VoiceProps {
     [CmdletBinding()]Param(
-        [Parameter(mandatory=$true)][String]$UserPrincipalName,
-        [Parameter(mandatory=$false)][Switch]$Join
+        [Parameter(mandatory=$true)][String]$UserPrincipalName
     )
     $userProperties = @()
     try {

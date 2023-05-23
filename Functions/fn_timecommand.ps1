@@ -1,10 +1,10 @@
 ﻿# Time a command and show in seconds
 Function TimeCommand($command) {
-    Write-Host "Command execution took $((Measure-Command -Expression { &$command | Out-Default }).Seconds) seconds" -ForegroundColor Yellow
+    Write-Output "Command execution took $((Measure-Command -Expression { &$command }).TotalSeconds) seconds"
 }
 # Time a command and show in milliseconds
 Function TimeCommandMS($command) {
-    Write-Host "Command execution took $((Measure-Command -Expression { &$command | Out-Default }).Milliseconds) milliseconds" -ForegroundColor Yellow
+    Write-Output "Command execution took $((Measure-Command -Expression { &$command }).TotalMilliseconds) milliseconds"
 }
 <#
 Function  TimeCommandOld {
