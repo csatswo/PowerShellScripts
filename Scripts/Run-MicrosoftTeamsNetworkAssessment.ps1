@@ -82,14 +82,15 @@ Function RunAssessment {
         Write-Output "Unable to change duration; running for [$oldDuration] seconds. Try running as administrator."
     }
     Write-Output "`nRunning the connectivity check. This may take a few minutes."
-    $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
-    $resultsPath = ($hostOutput.Split([System.Environment]::NewLine,[System.StringSplitOptions]::RemoveEmptyEntries)[-1] -split "written to: ")[1]
+    $terminalOutputCon = ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
+    & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object $terminalOutputCon
+    $resultsPath = ((Get-Content $terminalOutputCon).Split([System.Environment]::NewLine,[System.StringSplitOptions]::RemoveEmptyEntries)[-1] -split "written to: ")[1]
     Move-Item $resultsPath -Destination $tempFolder
-    Write-Output $hostOutput[0..($hostOutput.Count-2)]
     $durationMin = $([math]::Round(((($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '') / 60),1))
     Write-Output "`nRunning the media quality check. This will take about [$durationMin] minute(s)."
-    $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
-    $resultsPath = ($hostOutput.Split([System.Environment]::NewLine,[System.StringSplitOptions]::RemoveEmptyEntries)[-1] -split "written to: ")[1]
+    $terminalOutputMed = ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
+    & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object $terminalOutputMed
+    $resultsPath = ((Get-Content $terminalOutputMed).Split([System.Environment]::NewLine,[System.StringSplitOptions]::RemoveEmptyEntries)[-1] -split "written to: ")[1]
     $results = Import-Csv $resultsPath
     $resultsCsv = ($resultsPath -split "\\")[-1]
     $lossRateArray = @()
@@ -100,6 +101,7 @@ Function RunAssessment {
         $latencyArray += [double]($result.'AverageLatency-Ms')
         $jitterArray += [double]($result.'AverageJitter-Ms')
         $result | Add-Member -NotePropertyName 'Site' -NotePropertyValue $Site
+        $result | Add-Member -NotePropertyName 'UserName' -NotePropertyValue $env:USERNAME
     }
     $results | Export-Csv -Path ($tempFolder + "\" + $resultsCsv) -NoTypeInformation
     Write-Output "`nAverage Call Quality Metrics:`n"
