@@ -78,7 +78,7 @@ Function RunAssessment {
         }
     }
     catch {
-        $Error[0].Exception
+        Write-Warning $Error[0].Exception.Message
         Write-Output "Unable to change duration; running for [$oldDuration] seconds. Try running as administrator."
     }
     Write-Output "`nRunning the connectivity check. This may take a few minutes."
@@ -117,14 +117,15 @@ Function RunAssessment {
     Compress-Archive @compress
     Write-Output "`nAll tests complete! Results stored at $zipPath"
 }
+$tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
 if ($Install) {
     InstallTeamsNetAssess
 }
 if (Test-Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe") {
         Write-Output "Teams Network Assessment Tool found. Running tests."
-        $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
         RunAssessment
     }
 else {
-        Write-Warning "Teams Network Assessment Tool not found in `'${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool`'. Try running again using the `'-Install `$true`' parameter."
+    Write-Output "`n"
+    Write-Warning "Teams Network Assessment Tool not found in `'${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool`'. Try running again using the `'-Install `$true`' parameter."
 }
