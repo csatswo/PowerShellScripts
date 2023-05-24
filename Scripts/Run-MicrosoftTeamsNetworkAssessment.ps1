@@ -118,6 +118,7 @@ Function RunAssessment {
     }
     Compress-Archive @compress
     Write-Output "`nAll tests complete! Results stored at $zipPath"
+    explorer $OutputFolder
 }
 $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
 if ($Install) {
