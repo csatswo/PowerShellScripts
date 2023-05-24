@@ -15,57 +15,71 @@
 
     The name of the site being tested. For example: "Los Angeles" or "Site01". Used in naming the resulting files.
 
-.PARAMETER Duration
-
-    OPTIONAL - The duration in seconds to run the media quality check. The default is 300 seconds.
-
 .PARAMETER OutputFolder
 
-    OPTIONAL - The destination directory to copy the results to. Results are saved to temp directory regardless.
+    The destination directory to copy the results to. Results are also saved to a temp directory.
+
+.PARAMETER Duration
+
+    OPTIONAL [Integer] - The duration in seconds to run the media quality check. The default is 300 seconds.
+
+.PARAMETER Install
+
+    OPTIONAL [Boolean] - True or False. If true, will download and install the Microsoft Teams Network Assessment tool.
 
 .EXAMPLE
 
-    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01
+    PS> .\Run-MicrosoftTeamsNetworkAssessment -Site Site01
     Runs the test using the existing configuration in NetworkAssessmentTool.exe.config.
 
 .EXAMPLE
 
-    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
+    PS> .\Run-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 3600
     Modifies the NetworkAssessmentTool.exe.config with the provided duration of 1 hour. Modifying the duration may require running from an elevated prompt.
 
 .EXAMPLE
 
-    PS> .\Test-MicrosoftTeamsNetworkAssessment -Site Site01 -Duration 60 -Destination "C:\Temp"
+    PS> .\Run-MicrosoftTeamsNetworkAssessmentt -Site Site01 -Duration 60 -Destination "C:\Temp"
     Modifies the NetworkAssessmentTool.exe.config with the provided duration of 1 minute. Modifying the duration may require running from an elevated prompt. Also saves the results to the C:\Temp directory.
+
+.EXAMPLE
+
+    PS> .\Run-MicrosoftTeamsNetworkAssessmentt -Site Site01 -Install $true"
+    Downloads and installs NetworkAssessmentTool.exe then runs the test using the default duration.
 #>
 Param(
     [Parameter(mandatory=$true)][String]$Site,
-    [Parameter(Mandatory = $false)][ValidateScript({
-        $_ -gt 0
-    })][Int]$Duration,
-    [Parameter(Mandatory = $false)][ValidateScript({
-        if (Test-Path $_){
-            $true
-        } else {
-            throw "Path $_ is not valid"
-        }})][string]$OutputFolder 
+    [Parameter(Mandatory=$true)][ValidateScript({ if (Test-Path $_){ $true } else { throw "Path $_ is not valid" }})][string]$OutputFolder,
+    [Parameter(Mandatory=$false)][ValidateScript({ $_ -gt 0 })][Int]$Duration,
+    [Parameter(mandatory=$false)][bool]$Install
 )
+function InstallTeamsNetAssess {
+    Write-Host "Downloading and installing the Microsoft Teams Network Assessment Tool..."
+    $downloadPage = Invoke-WebRequest -UseBasicParsing -Uri 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=103017'
+    $downloadLink = ($DownloadPage.Links | Where-Object {$_.href -like '*MicrosoftTeamsNetworkAssessmentTool.exe'}).href[0]
+    Invoke-WebRequest -UseBasicParsing -Uri $downloadLink -OutFile $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+    Write-Warning -Message "The tool will be installed using the default installation path of `'%ProgramFiles(x86)%\Microsoft Teams Network Assessment Tool\`'"
+    Start-Process "$tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe" /passive -Wait
+    Remove-Item -Path $tempFolder\MicrosoftTeamsNetworkAssessmentTool.exe
+}
 Function RunAssessment {
     $invalidChars = "[{0}]" -f [regex]::Escape(([IO.Path]::GetInvalidFileNameChars() -join ''))
     $Site = ($Site -replace $invalidChars -replace " ").Trim()
     try {
         $configFile = Get-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
         $oldDuration = (($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '')
-        if ($oldDuration -ne $duration) {
-            Write-Output "`nUpdating configuration - changing test duration from $oldDuration to $duration"
-            $i = $configFile.IndexOf(($configFile | Where-Object {$_ -like "*MediaDuration*"}))
-            $configFile[$i] = $configFile[$i] -replace '\d+',$duration
-            $configFile | Set-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config"
+        if ($duration) {
+            if ($oldDuration -ne $duration) {
+                $i = $configFile.IndexOf(($configFile | Where-Object {$_ -like "*MediaDuration*"}))
+                $configFile[$i] = $configFile[$i] -replace '\d+',$duration
+                $configFile | Set-Content -Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe.config" -ErrorAction Stop
+                Write-Output "`nTest duration changed from [$oldDuration] seconds to [$duration] seconds"
+            }
         }
     }
     catch {
         $Error[0].Exception
-        Write-Output "Unable to change duration; running for $oldDuration seconds. Try running as administrator."
+        Write-Output "Unable to change duration; running for [$oldDuration] seconds. Try running as administrator."
     }
     Write-Output "`nRunning the connectivity check. This may take a few minutes."
     $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_service_connectivity_check_terminal.txt")
@@ -73,7 +87,7 @@ Function RunAssessment {
     Move-Item $resultsPath -Destination $tempFolder
     Write-Output $hostOutput[0..($hostOutput.Count-2)]
     $durationMin = $([math]::Round(((($configFile | Where-Object {$_ -like "*MediaDuration*"}) -replace "[^0-9]" , '') / 60),1))
-    Write-Output "`nRunning the media quality check. This will take about $durationMin minute(s)."
+    Write-Output "`nRunning the media quality check. This will take about [$durationMin] minute(s)."
     $hostOutput = & "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe" /qualitycheck | Tee-Object ($tempFolder + "\" + (Get-Date -Format yyyyMMddHHmmssffff) + "_quality_check_terminal.txt")
     $resultsPath = ($hostOutput.Split([System.Environment]::NewLine,[System.StringSplitOptions]::RemoveEmptyEntries)[-1] -split "written to: ")[1]
     $results = Import-Csv $resultsPath
@@ -103,10 +117,14 @@ Function RunAssessment {
     Compress-Archive @compress
     Write-Output "`nAll tests complete! Results stored at $zipPath"
 }
+if ($Install) {
+    InstallTeamsNetAssess
+}
 if (Test-Path "${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool\NetworkAssessmentTool.exe") {
         Write-Output "Teams Network Assessment Tool found. Running tests."
+        $tempFolder = (New-Item -ItemType Directory -Path ("$env:TEMP" + "\MicrosoftTeamsNetworkAssessmentTool_" + (Get-Date -Format yyyyMMddHHmmssffff))).FullName
         RunAssessment
     }
 else {
-        Write-Warning "Teams Network Assessment Tool not found in `'${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool`'."
+        Write-Warning "Teams Network Assessment Tool not found in `'${env:ProgramFiles(x86)}\Microsoft Teams Network Assessment Tool`'. Try running again using the `'-Install `$true`' parameter."
 }
