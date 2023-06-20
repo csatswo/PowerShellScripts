@@ -3,8 +3,6 @@
     $userProperties = @()
     try {
         $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction Stop
-        $groupPolicyAssignments = EnumGroupPolicyAssignment
-        $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"} | Sort-Object
         if ($csOnlineUser.AssignedPlan) {
             $assignedPlans = @()
             $csOnlineUser.ProvisionedPlan | foreach { $assignedPlans += [String]($_.Capability + ":" + $_.CapabilityStatus) }
@@ -36,9 +34,8 @@
             UsageLocation = $csOnlineUser.UsageLocation
             AssignedPlan = $assignedPlans -join "|"
             Identity = $csOnlineUser.Identity
-            GroupPolicyAssignments = $userGroupPolicyAssignments
         }
-        $userProperties | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,NumberType,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,AssignedPlan,Identity,GroupPolicyAssignments
+        $userProperties | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,NumberType,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,AssignedPlan,Identity
     } catch {
         Write-Host $_.Exception.Message -ForegroundColor Red
     }
