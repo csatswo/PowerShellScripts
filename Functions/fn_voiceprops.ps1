@@ -1,7 +1,5 @@
 ﻿function VoiceProps {
-    [CmdletBinding()]Param(
-        [Parameter(mandatory=$true)][String]$UserPrincipalName
-    )
+    [CmdletBinding()]Param([Parameter(mandatory=$true)][String]$UserPrincipalName)
     $userProperties = @()
     try {
         $csOnlineUser = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction Stop
@@ -9,13 +7,7 @@
         $userGroupPolicyAssignments = $groupPolicyAssignments | ? {$_.UserPrincipalName -eq "$UserPrincipalName"} | Sort-Object
         if ($csOnlineUser.AssignedPlan) {
             $assignedPlans = @()
-            foreach ($assignedPlan in $csOnlineUser.AssignedPlan) {
-                $assignedPlans += [PSCustomObject]@{
-                    Capability = $assignedPlan.Capability
-                    CapabilityStatus = $assignedPlan.CapabilityStatus
-                    ServicePlanId = $assignedPlan.ServicePlanId
-                }
-            }
+            $csOnlineUser.ProvisionedPlan | foreach { $assignedPlans += [String]($_.Capability + ":" + $_.CapabilityStatus) }
         }
         else {
             $assignedPlans = $null
@@ -42,7 +34,7 @@
             TeamsUpgradeEffectiveMode = $csOnlineUser.TeamsUpgradeEffectiveMode
             RegistrarPool = $csOnlineUser.RegistrarPool
             UsageLocation = $csOnlineUser.UsageLocation
-            AssignedPlan = $assignedPlans
+            AssignedPlan = $assignedPlans -join "|"
             Identity = $csOnlineUser.Identity
             GroupPolicyAssignments = $userGroupPolicyAssignments
         }
