@@ -7,7 +7,7 @@
     if ($UserReturned) {
         Write-Host "`nGetting Effective Tenant Dial Plan for $User and translating number..."
         if ($UserReturned.TenantDialPlan) {
-            Write-Host "Dial Plans assigned to $user are: `'$($UserReturned.TenantDialPlan + ", " + $UserReturned.DialPlan + " `(Usage Location`)")`'" -ForegroundColor Green
+            Write-Host "Dial Plans assigned to $user are: `'$($UserReturned.TenantDialPlan.Name + ", " + $UserReturned.DialPlan + " `(Usage Location`)")`'" -ForegroundColor Green
         } else {
             Write-Host "Dial Plans assigned to $user are: $("`'Global, " + $UserReturned.DialPlan + " `(Usage Location`)`'")" -ForegroundColor Green
         }
