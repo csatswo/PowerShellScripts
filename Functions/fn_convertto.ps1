@@ -31,18 +31,18 @@
         foreach ($property in $headerNames) {
             $header += ('{0,-' + $columns[$property] + '}') -f $property
         }
-        $header -join ' | '
+        ("| " + ($header -join ' | ') + " |")
         # Create delimiter row
         $delimiter = @()
         foreach ($property in $headerNames) { $delimiter += '-' * $columns[$property] }
-        $delimiter -join ' | '
+        ("| " + ($delimiter -join ' | ') + " |")
         # Add whitespace to header row for consistent column width throughout table
         foreach ($item in $items) {
             $values = @()
             foreach ($property in $headerNames) {
                 $values += ('{0,-' + $columns[$property] + '}') -f $item.($property)
             }
-            $values -join ' | '
+            ("| " + ($values -join ' | ') + " |")
         }
     }
 }
