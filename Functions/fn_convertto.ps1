@@ -4,7 +4,7 @@
         [Parameter(mandatory=$false)][switch]$HideHeaders
     )
     # Code borrowed from https://www.powershellgallery.com/packages/PSMarkdown/1.1
-    # Modified to preserve order of properties, escape special characters, and allow an unpopulated header row
+    # Modified to preserve order of properties, escape special characters, support null values, and allow an unpopulated header row
     # More escaping may be needed after additional testing
     Begin {
         $items   = @()
@@ -20,12 +20,12 @@
         foreach ($item in $InputObject) {
             $items += $item
             foreach ($property in $item.PSObject.Properties) {
-                if ($property.Value -ne $null) {
+                if ($null -ne $property.Value) {
                     $propertyName = $property.Name | EscChar
                     $propertyValue = $property.Value | EscChar
-                    if (-not $columns.ContainsKey($property.Name) -or $columns[$property.Name] -lt $propertyValue.ToString().Length) {
-                        $columns[$property.Name] = $propertyValue.ToString().Length
-                    }
+                }
+                if (-not $columns.ContainsKey($property.Name) -or $columns[$property.Name] -lt $propertyValue.ToString().Length) {
+                    $columns[$property.Name] = $propertyValue.ToString().Length
                 }
             }
         }
@@ -57,7 +57,9 @@
             foreach ($property in $item.PSObject.Properties.Name) {
                 # $property = $property | EscChar
                 $value = $item.($property)
-                $value = $value | EscChar
+                if ($null -ne $value ) {
+                    $value = $value | EscChar
+                }
                 $values += ('{0,-' + $columns[($property | EscChar)] + '}') -f $value
             }
             ("| " + ($values -join ' | ') + " |")
