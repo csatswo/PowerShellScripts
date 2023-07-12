@@ -44,7 +44,8 @@ try {
         "User.Read.All",
         "TeamMember.ReadWrite.All",
         "Group.ReadWrite.All",
-        "ChannelMessage.Send"
+        "ChannelMessage.Send",
+        "ChannelSettings.Read.All"
     )
     $mgContext = Get-MgContext
     if ($mgContext) {
