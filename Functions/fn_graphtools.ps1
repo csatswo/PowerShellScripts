@@ -36,8 +36,8 @@
 
 Function Get-AADAuthToken {
     [CmdletBinding()][OutputType([string])]Param (
-        [Parameter(Mandatory=$true)]$TenantId,#[ValidateScript({try{ [System.Guid]::Parse($_) | Out-Null;$true } catch { $false }})][string]$TenantId,
-        [Parameter(Mandatory=$true)]$ClientId,#[ValidateScript({try{ [System.Guid]::Parse($_) | Out-Null;$true } catch { $false }})][string]$ClientId,
+        [Parameter(Mandatory=$true)][ValidateScript({try{ [System.Guid]::Parse($_) | Out-Null;$true } catch { $false }})][string]$TenantId,
+        [Parameter(Mandatory=$true)][ValidateScript({try{ [System.Guid]::Parse($_) | Out-Null;$true } catch { $false }})][string]$ClientId,
         [Parameter(Mandatory=$true)][string[]]$Scopes,
         [Parameter(Mandatory=$false)][string]$Username
     )
