@@ -71,14 +71,12 @@ try {
         	Values = @(
         		@{
         			"@odata.type" = "microsoft.graph.aadUserConversationMember"
-        			Roles = @(
-        				"owner"
-        			)
+        			Roles = @("owner")
         			"User@odata.bind" = $bindingUri
         		}
         	)
         }
-        $mgUserResults = Add-MgTeamMember -TeamId $team.Id -BodyParameter $memberParams
+        $null = Add-MgTeamMember -TeamId $team.Id -BodyParameter $memberParams
         Start-Sleep -Seconds 5 # Giving Teams a moment to replicate after adding owner
     }
     if (-not $Importance) {

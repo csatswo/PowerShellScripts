@@ -20,10 +20,10 @@
 
         Displays a formatted table of Teams with guests and the guests of the Team.
 
-        TeamDisplayName GuestName      GuestUser                                                     
-        --------------- ---------      ---------                                                     
+        TeamDisplayName GuestName      GuestUser
+        --------------- ---------      ---------
         Contoso         Tony Stark     tony.stark_domain.com#EXT#@domain.onmicrosoft.com
-        Contoso         Bruce Banner   bruce.banner_domain.com#EXT#@domain.onmicrosoft.com              
+        Contoso         Bruce Banner   bruce.banner_domain.com#EXT#@domain.onmicrosoft.com
         Test Team 1     csatswo        csatswo_domain.com#EXT#@domain.onmicrosoft.com
 
 #>
@@ -82,8 +82,5 @@ Write-Host `n
 
 <#
 This section is experimental and is commented out intentionally.
-
-function Get-TeamsGuests {
-    Write-Output $CustomObject | Select-Object TeamDisplayName,TeamGroupId,GuestName,GuestUser | Sort-Object -Property TeamDisplayName
-    }
+function Get-TeamsGuests { Write-Output $CustomObject | Select-Object TeamDisplayName,TeamGroupId,GuestName,GuestUser | Sort-Object -Property TeamDisplayName }
 #>

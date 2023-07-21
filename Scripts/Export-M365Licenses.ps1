@@ -14,7 +14,7 @@
 
     The path for the exported CSV. For example: "C:\Temp\licenses.csv"
 
-.EXAMPLE 
+.EXAMPLE
     
     .\Export-M365Licenses.ps1 -Path C:\Temp\licenses.csv
 #>
@@ -35,7 +35,7 @@ $licenseReference = Import-CSV $env:TEMP\SKU_Product_Names.csv | Group-Object -A
 
 # Find subscribed licences
 $subscribedSku = @()
-$azureSkus = Get-AzureADSubscribedSku 
+$azureSkus = Get-AzureADSubscribedSku
 
 # Loop through each subscribed SKU
 foreach ($azureSku in $azureSkus) {

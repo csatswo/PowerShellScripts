@@ -40,7 +40,7 @@ Param(
 
 $results = @()
 
-if ($Filter) { 
+if ($Filter) {
     $groups = Get-MsolGroup -All | Where-Object {$_.DisplayName -like "$filter"}
 } else {
     $groups = Get-MsolGroup -All

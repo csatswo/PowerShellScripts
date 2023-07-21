@@ -54,7 +54,7 @@ if (Test-Path $path) {
 
     $usersHashTable = $usersJson | Group-Object -AsHashTable -Property ID
     $channelsHashTable = $channelsJson | Group-Object -AsHashTable -Property ID
-    $groupsHashTable = $groupsJson | Group-Object -AsHashTable -Property ID        
+    $groupsHashTable = $groupsJson | Group-Object -AsHashTable -Property ID
     
     $channels = @()
     $users = @()
