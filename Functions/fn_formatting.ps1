@@ -1,4 +1,5 @@
-﻿Function ConvertTo-MDTable {
+﻿New-Alias -Name fm -Value Format-Markdown -Description 'fm -> Format-Markdown'
+Function Format-Markdown {
     [CmdletBinding()][OutputType([string])]Param (
         [Parameter(Mandatory = $true,Position = 0,ValueFromPipeline = $true)][PSObject[]]$InputObject,
         [Parameter(mandatory=$false)][switch]$HideHeaders
