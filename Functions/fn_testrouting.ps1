@@ -11,7 +11,7 @@
         } else {
             Write-Host "Dial Plans assigned to $UserPrincipalName are: $("`'Global, " + $UserReturned.DialPlan + " `(Usage Location`)`'")" -ForegroundColor Green
         }
-        $NormalisedResult = Test-CsEffectiveTenantDialPlan -DialedNumber $DialedNumber -Identity $User
+        $NormalisedResult = Test-CsEffectiveTenantDialPlan -DialedNumber $DialedNumber -Identity $UserReturned.UserPrincipalName
             if ($NormalisedResult.TranslatedNumber) {
             Write-Host "`n$DialedNumber translated to $($NormalisedResult.TranslatedNumber)" -ForegroundColor Green
             Write-Host "`nUsing rule:`n$($NormalisedResult.MatchingRule -replace ";","`n")"
@@ -20,7 +20,7 @@
             Write-Host "`rNo translation patterns matched"
             $NormalisedNumber = $DialedNumber
         }
-        Write-Host "`nGetting assigned Online Voice Routing Policy for $User..."
+        Write-Host "`nGetting assigned Online Voice Routing Policy for $($UserReturned.UserPrincipalName)..."
         $UserOnlineVoiceRoutingPolicy = ($UserReturned).OnlineVoiceRoutingPolicy
         if ($UserOnlineVoiceRoutingPolicy.Name) {
             Write-Host "`rOnline Voice Routing Policy assigned to $UserPrincipalName is: '$UserOnlineVoiceRoutingPolicy'" -ForegroundColor Green
