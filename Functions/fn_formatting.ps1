@@ -67,3 +67,11 @@ Function Format-Markdown {
         }
     }
 }
+
+Function ConvertFrom-Base64($Base64) {
+    return [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($Base64))
+}
+
+Function ConvertTo-Base64($String) {
+    return [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($String))
+}
