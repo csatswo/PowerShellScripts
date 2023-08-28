@@ -51,16 +51,17 @@ Function m365 {
 }
 
 Function refreshM365 {
-    $modules = @("AzureADPreview","ExchangeOnlineManagement","Microsoft.Online.SharePoint.PowerShell","MicrosoftTeams","MSOnline")
+    $modulesM365  = @("AzureADPreview","ExchangeOnlineManagement","Microsoft.Online.SharePoint.PowerShell","MicrosoftTeams","MSOnline")
     $modulesGraph = @("Microsoft.Graph.Teams","Microsoft.Graph.Users")
-    foreach ($moduleName in $modules) {
+    $modulesOther = @("ImportExcel")
+    foreach ($moduleName in $modulesM365) {
         $installedModule = Get-Module -ListAvailable -Name $moduleName
         $availableModule = Find-Module -Repository PSGallery -Name $moduleName
         if ($installedModule) {
             if ($installedModule.Version -lt $availableModule.Version) {
                 Write-Host "`n$($installedModule.Name) version is $($installedModule.Version)" -ForegroundColor Yellow
                 Write-Host "Updating module to version $($availableModule.Version)" -ForegroundColor Yellow
-                Uninstall-Module -Name $installedModule.Name
+                Uninstall-Module -Name $installedModule.Name -AllVersions
                 Install-Module -Repository PSGallery -Name $availableModule.Name
             } else {
                 Write-Host "`n$moduleName"
@@ -94,7 +95,25 @@ Function refreshM365 {
             if ($installedModule.Version -lt $availableModule.Version) {
                 Write-Host "`n$($installedModule.Name) version is $($installedModule.Version)" -ForegroundColor Yellow
                 Write-Host "Updating module to version $($availableModule.Version)" -ForegroundColor Yellow
-                Uninstall-Module -Name $installedModule.Name
+                Uninstall-Module -Name $installedModule.Name -AllVersions
+                Install-Module -Repository PSGallery -Name $availableModule.Name
+            } else {
+                Write-Host "`n$moduleName"
+                Write-Host "Installed version is latest `($($installedModule.Version)`)" -ForegroundColor Green
+            }
+        } else {
+            Write-Host "$($availableModule.Name) is not installed. Installing now..." -ForegroundColor Yellow
+            Install-Module -Repository PSGallery -Name $availableModule.Name            
+        }
+    }
+    foreach ($moduleName in $modulesOther) {
+        $installedModule = Get-Module -ListAvailable -Name $moduleName
+        $availableModule = Find-Module -Repository PSGallery -Name $moduleName
+        if ($installedModule) {
+            if ($installedModule.Version -lt $availableModule.Version) {
+                Write-Host "`n$($installedModule.Name) version is $($installedModule.Version)" -ForegroundColor Yellow
+                Write-Host "Updating module to version $($availableModule.Version)" -ForegroundColor Yellow
+                Uninstall-Module -Name $installedModule.Name -AllVersions
                 Install-Module -Repository PSGallery -Name $availableModule.Name
             } else {
                 Write-Host "`n$moduleName"
