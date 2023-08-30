@@ -46,7 +46,7 @@
     try {
         $aadUnifiedGroupSettings = (Get-AzureADDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ)
         $aadUnifiedGroupSettingsValues = $aadUnifiedGroupSettings.Values
-        if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value) {
+        if (!($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value) {
                 Write-Output "`nUnified Group settings are configured but group creation is not restricted."
             if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value) {
                 $groupCreationAllowedGroup = Get-AzureADGroup -ObjectId ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value
