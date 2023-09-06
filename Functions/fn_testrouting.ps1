@@ -1,5 +1,73 @@
 ﻿Function TestRouting {
     param([Parameter(mandatory=$true)][String]$UserPrincipalName,[Parameter(mandatory=$true)][String]$DialedNumber)
+    begin {
+        $voiceRoutes = @()
+        $matchedVoiceRoutes = @()
+        $allVoiceRoutes = Get-CsOnlineVoiceRoute
+    }
+    process {
+        try {
+            $userReturned = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction Stop
+            $userDisplayName = $userReturned.DisplayName
+            if ($userReturned.TenantDialPlan) {
+                $assignedDialPlans = @($userReturned.TenantDialPlan.Name,$($userReturned.DialPlan + " (Usage Location)"))
+            } else {
+                $assignedDialPlans = @("Global",$($userReturned.DialPlan + " (Usage Location)"))
+            }
+            $dialPlanTestResults = Test-CsEffectiveTenantDialPlan -DialedNumber $DialedNumber -Identity $userReturned.UserPrincipalName
+            if ($dialPlanTestResults.TranslatedNumber) {
+                $normalizedNumber = $dialPlanTestResults.TranslatedNumber
+                # $matchingRule = [System.Collections.ArrayList]@()
+                # $dialPlanTestResults.MatchingRule -split ";" | foreach { $matchingRule.Add(@{($_ -split "=")[0]=($_ -split "=")[1]}) }
+                $matchingRule = (Get-CsTenantDialPlan -Identity $assignedDialPlans[0]).NormalizationRules | ? {$_.Name -eq (($dialPlanTestResults.MatchingRule).Substring(($dialPlanTestResults.MatchingRule).IndexOf("Name=") + 5) -split ";")[0]}
+            } else {
+                $normalizedNumber = $null
+            }
+            $UserOnlineVoiceRoutingPolicy = ($userReturned).OnlineVoiceRoutingPolicy
+            if (!$userOnlineVoiceRoutingPolicy) { $userOnlineVoiceRoutingPolicy = "Global" }
+            $pstnUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity $userOnlineVoiceRoutingPolicy).OnlinePstnUsages
+            foreach ($pstnUsage in $pstnUsages) {
+                $voiceRoutes += $allVoiceRoutes | Where-Object {$_.OnlinePstnUsages -contains $pstnUsage} | Select-Object *,@{label="PstnUsage"; Expression= {$pstnUsage}}
+            }
+            $matchedVoiceRoutes = $voiceRoutes | Where-Object {$normalizedNumber -match $_.NumberPattern}
+            if ($matchedVoiceRoutes) {
+                $chosenPstnUsage = $matchedVoiceRoutes[0].PstnUsage
+                $matchedPstnUsageVoiceRoutes = $matchedVoiceRoutes | Where-Object {$_.PstnUsage -eq $chosenPstnUsage} | Select-Object Name, NumberPattern, PstnUsage, OnlinePstnGatewayList, Priority
+            } else {
+                $matchedVoiceRoutes = $null
+            }
+        }
+        catch {
+            $Error[0]
+        }
+    }
+    end {
+        Write-Output "`n";Write-Output "LineUri assigned to $userDisplayName is [$($userReturned.LineUri)]"
+        Write-Output "The following plans are assigned to $userDisplayName`:"
+        $UserReturned.AssignedPlan | Select-Object Capability,CapabilityStatus | ft
+        Write-Output "`r";Write-Output "Getting Effective Tenant Dial Plan for $userDisplayName..."
+        Write-Output "Dial Plans assigned to $userDisplayName are: [$($assignedDialPlans -join ", ")]"
+        if ($normalizedNumber) {
+            Write-Output "Dialed number `'$DialedNumber`' translated to [$normalizedNumber] using the following rule:"
+            $matchingRule | fl
+        } else {
+            Write-Output "No translation patterns matched";Write-Output "`r"
+        }
+        Write-Output "Getting assigned Online Voice Routing Policy for $userDisplayName..."
+        Write-Output "Online Voice Routing Policy assigned to $userDisplayName is: [$UserOnlineVoiceRoutingPolicy]"
+        if ($matchedVoiceRoutes) {
+            Write-Output "First Matching PSTN Usage is [$chosenPstnUsage]"
+            Write-Output "Found [$(($matchedPstnUsageVoiceRoutes).Count)] routes with matching pattern in PSTN Usage:"
+            $matchedPstnUsageVoiceRoutes | ft
+        } else {
+            Write-Warning -Message "No route with matching pattern found, unable to route call using Direct Routing."
+        }
+    }
+}
+
+<#
+Function TestRouting {
+    param([Parameter(mandatory=$true)][String]$UserPrincipalName,[Parameter(mandatory=$true)][String]$DialedNumber)
     $VoiceRoutes = @()
     $MatchedVoiceRoutes = @()
     $UserReturned = Get-CsOnlineUser -Identity $UserPrincipalName -ErrorAction SilentlyContinue
@@ -22,7 +90,7 @@
         }
         Write-Host "`nGetting assigned Online Voice Routing Policy for $($UserReturned.UserPrincipalName)..."
         $UserOnlineVoiceRoutingPolicy = ($UserReturned).OnlineVoiceRoutingPolicy
-        if ($UserOnlineVoiceRoutingPolicy.Name) {
+        if ($UserOnlineVoiceRoutingPolicy) {
             Write-Host "`rOnline Voice Routing Policy assigned to $UserPrincipalName is: '$UserOnlineVoiceRoutingPolicy'" -ForegroundColor Green
             $PSTNUsages = (Get-CsOnlineVoiceRoutingPolicy -Identity $UserOnlineVoiceRoutingPolicy).OnlinePstnUsages
             foreach ($PSTNUsage in $PSTNUsages) {
@@ -63,3 +131,4 @@
         }
     } else { Write-Warning -Message "$UserPrincipalName not found on tenant." }
 }
+#>
