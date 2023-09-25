@@ -14,7 +14,7 @@ $i = 0; foreach ($team in $allTeams) {
     Write-Progress -Activity "Processing Team: $($team.DisplayName)" -Status "$percentComplete% Complete:" -PercentComplete $percentComplete
     try {
         $members  = Get-TeamUser -GroupId $team.GroupId -ErrorAction Stop
-        $guests = $members | ? {$_.Role -eq "Guest" -and $_.User -like "*$domain#EXT#*"}
+        $guests = $members | Where-Object {$_.Role -eq "Guest" -and $_.User -like "*$domain#EXT#*"}
         if ($guests) {
             foreach ($member in $members) {
                 $item = [PSCustomObject]@{
@@ -38,7 +38,7 @@ $i = 0; foreach ($team in $allTeams) {
             Error = $Error[0].Exception
         }
         [void]$failures.Add($item)
-        $item | fl
+        $item | Format-List
     }
 }
 if ($failures) { $failures | Export-Csv -Path "$PWD\teams_with_guests_FAILURES_$timeStamp.csv" -NoTypeInformation }
