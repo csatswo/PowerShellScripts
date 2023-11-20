@@ -1,4 +1,7 @@
-$tenant = "demo"
+$tenant = "lab"
+if (-not $tenant) {
+    $tenant = ((Read-Host -Prompt "Enter the name of the Tenant...") -Replace '[\W]','').Trim()
+}
 
 $timestamp = Get-Date -Format "yyyy-MM-dd-HHmmss"
 $outputFolder = New-Item -Path $PWD\$($tenant)_$($timestamp) -ItemType Directory
