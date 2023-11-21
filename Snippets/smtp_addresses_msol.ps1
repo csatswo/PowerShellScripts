@@ -1,4 +1,7 @@
 $tenant = "lab"
+if (-not $tenant) {
+    $tenant = ((Read-Host -Prompt "Enter the name of the Tenant...") -Replace '[\W]','').Trim()
+}
 $timeStamp = Get-Date -Format "yyyy-dd-MM-HHmmss"
 $msolUsers = Get-MsolUser -All
 $msolUsers | ForEach-Object -PV user {$_} | ForEach-Object {
