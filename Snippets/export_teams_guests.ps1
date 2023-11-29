@@ -5,6 +5,8 @@
 # Specify an optional specific guest domain to look for
 $domain = $null # Example: "gmail.com"
 
+$tenant = "lab"
+if (-not $tenant) { $tenant = ((Read-Host -Prompt "Enter the name of the Tenant...") -Replace '[\W]','').Trim() }
 $allTeams = Get-Team -NumberOfThreads 4
 $timeStamp = Get-Date -Format "yyyy-dd-MM-HHmmss"
 $results  = [System.Collections.ArrayList]@()
@@ -18,13 +20,36 @@ $i = 0; foreach ($team in $allTeams) {
         if ($guests) {
             foreach ($member in $members) {
                 $item = [PSCustomObject]@{
-                    Team = $team.DisplayName
-                    MailNickName = $team.MailNickName
-                    GroupId = $team.GroupId
-                    Name = $member.Name
-                    User = $member.User
-                    UserId = $member.UserId
-                    Role = $member.Role
+                    GroupId                           = $team.GroupId
+                    InternalId                        = $team.InternalId
+                    DisplayName                       = $team.DisplayName
+                    Description                       = $team.Description
+                    Visibility                        = $team.Visibility
+                    MailNickName                      = $team.MailNickName
+                    Classification                    = $team.Classification
+                    Archived                          = $team.Archived
+                    AllowGiphy                        = $team.AllowGiphy
+                    GiphyContentRating                = $team.GiphyContentRating
+                    AllowStickersAndMemes             = $team.AllowStickersAndMemes
+                    AllowCustomMemes                  = $team.AllowCustomMemes
+                    AllowGuestCreateUpdateChannels    = $team.AllowGuestCreateUpdateChannels
+                    AllowGuestDeleteChannels          = $team.AllowGuestDeleteChannels
+                    AllowCreateUpdateChannels         = $team.AllowCreateUpdateChannels
+                    AllowCreatePrivateChannels        = $team.AllowCreatePrivateChannels
+                    AllowDeleteChannels               = $team.AllowDeleteChannels
+                    AllowAddRemoveApps                = $team.AllowAddRemoveApps
+                    AllowCreateUpdateRemoveTabs       = $team.AllowCreateUpdateRemoveTabs
+                    AllowCreateUpdateRemoveConnectors = $team.AllowCreateUpdateRemoveConnectors
+                    AllowUserEditMessages             = $team.AllowUserEditMessages
+                    AllowUserDeleteMessages           = $team.AllowUserDeleteMessages
+                    AllowOwnerDeleteMessages          = $team.AllowOwnerDeleteMessages
+                    AllowTeamMentions                 = $team.AllowTeamMentions
+                    AllowChannelMentions              = $team.AllowChannelMentions
+                    ShowInTeamsSearchAndSuggestions   = $team.ShowInTeamsSearchAndSuggestions
+                    UserId                            = $member.UserId
+                    User                              = $member.User
+                    Name                              = $member.Name
+                    Role                              = $member.Role
                 }
                 [void]$results.Add($item)
             }
