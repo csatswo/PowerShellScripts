@@ -32,7 +32,7 @@
             $matchedVoiceRoutes = $voiceRoutes | Where-Object {$normalizedNumber -match $_.NumberPattern}
             if ($matchedVoiceRoutes) {
                 $chosenPstnUsage = $matchedVoiceRoutes[0].PstnUsage
-                $matchedPstnUsageVoiceRoutes = $matchedVoiceRoutes | Where-Object {$_.PstnUsage -eq $chosenPstnUsage} | Select-Object Name, NumberPattern, PstnUsage, OnlinePstnGatewayList, Priority
+                $matchedPstnUsageVoiceRoutes = @($matchedVoiceRoutes | Where-Object {$_.PstnUsage -eq $chosenPstnUsage} | Select-Object Name, NumberPattern, PstnUsage, OnlinePstnGatewayList, Priority)
             } else {
                 $matchedVoiceRoutes = $null
             }
