@@ -24,6 +24,7 @@
             OnPremLineURI = $csOnlineUser.OnPremLineURI
             LineUri = $csOnlineUser.LineUri
             NumberType = $numberType
+            OnlineDialOutPolicy = $csOnlineUser.OnlineDialOutPolicy
             OnlineVoiceRoutingPolicy = $csOnlineUser.OnlineVoiceRoutingPolicy
             TenantDialPlan = $csOnlineUser.TenantDialPlan
             TeamsCallingPolicy = $csOnlineUser.TeamsCallingPolicy
@@ -35,7 +36,7 @@
             AssignedPlan = $assignedPlans -join "|"
             Identity = $csOnlineUser.Identity
         }
-        $userProperties | Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,NumberType,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,AssignedPlan,Identity
+        $userProperties #| Select-Object DisplayName,UserPrincipalName,SipAddress,EnterpriseVoiceEnabled,OnPremLineURI,LineUri,NumberType,OnlineDialOutPolicy,OnlineVoiceRoutingPolicy,TenantDialPlan,TeamsCallingPolicy,TeamsMeetingPolicy,TeamsMeetingBroadcastPolicy,TeamsUpgradeEffectiveMode,RegistrarPool,UsageLocation,AssignedPlan,Identity
     } catch {
         Write-Host $_.Exception.Message -ForegroundColor Red
     }
