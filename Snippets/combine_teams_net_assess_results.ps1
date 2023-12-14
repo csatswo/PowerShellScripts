@@ -1,8 +1,8 @@
 ﻿$resultsFolder = "C:\TEMP\TestResults"
-Get-ChildItem -Path $resultsFolder -Directory | foreach -pv dir {$_} | foreach {
+Get-ChildItem -Path $resultsFolder -Directory | ForEach-Object -pv dir {$_} | ForEach-Object {
     $results = [System.Collections.ArrayList]@()
-    Get-ChildItem -Path $dir.FullName -Recurse -Include *.csv | foreach -pv csv {$_} | foreach {
-        Import-Csv -Path $csv.FullName | foreach {
+    Get-ChildItem -Path $dir.FullName -Recurse -Include *.csv | ForEach-Object -pv csv {$_} | ForEach-Object {
+        Import-Csv -Path $csv.FullName | ForEach-Object {
             [void]$results.Add($_)
         }
     }
