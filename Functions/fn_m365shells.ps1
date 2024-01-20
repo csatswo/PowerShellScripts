@@ -1,5 +1,5 @@
 function iseTitle {
-    $Host.UI.RawUI.WindowTitle = (Get-MsolDomain | Where-Object {$_.isDefault}).name
+    $Host.UI.RawUI.WindowTitle = (Get-CsOnlineSipDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}).Name
     Set-Location C:\Temp
 }
 
@@ -26,28 +26,50 @@ Function spo {
 }
 
 Function m365mfa {
-    Write-Host "Connecting to MSOnline..."
-    msol
-    Write-Host "Connecting to AzureAD..."
-    aad
-    Write-Host "Connecting to Teams..."
-    teams
-    Write-Host "Connecting to ExchangeOnline..."
-    exo
-    iseTitle
+    if ((Get-Host).Version -match '5.1') {
+        Write-Host "Connecting to MSOnline..."
+        msol
+        Write-Host "Connecting to AzureAD..."
+        aad
+        Write-Host "Connecting to Teams..."
+        teams
+        Write-Host "Connecting to ExchangeOnline..."
+        exo
+        iseTitle
+    }
+    else {
+        Write-Host "Not PowerShell 5.1, skipping MSOnline and AzureAD..." -ForegroundColor Yellow
+        Write-Host "Connecting to Teams..."
+        teams
+        Write-Host "Connecting to ExchangeOnline..."
+        exo
+        iseTitle
+    }
 }
 
 Function m365 {
-    $Credential  = Get-Credential
-    Write-Host "Connecting to MSOnline..."
-    Import-Module MSOnline;Connect-MsolService -Credential $Credential | Out-Null
-    Write-Host "Connecting to AzureAD..."
-    Import-Module AzureADPreview;Connect-AzureAD -Credential $Credential | Out-Null
-    Write-Host "Connecting to Teams..."
-    Import-Module MicrosoftTeams;Connect-MicrosoftTeams -Credential $Credential | Out-Null
-    Write-Host "Connecting to ExchangeOnline..."
-    Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -Credential $Credential -ShowBanner:$false
-    iseTitle
+    if ((Get-Host).Version -match '5.1') {
+        $Credential  = Get-Credential
+        Write-Host "Connecting to MSOnline..."
+        Import-Module MSOnline;Connect-MsolService -Credential $Credential | Out-Null
+        Write-Host "Connecting to AzureAD..."
+        Import-Module AzureADPreview;Connect-AzureAD -Credential $Credential | Out-Null
+        Write-Host "Connecting to Teams..."
+        Import-Module MicrosoftTeams;Connect-MicrosoftTeams -Credential $Credential | Out-Null
+        Write-Host "Connecting to ExchangeOnline..."
+        Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -Credential $Credential -ShowBanner:$false
+        iseTitle
+    }
+    else {
+        $Credential  = Get-Credential
+        Write-Host "Not PowerShell 5.1, skipping MSOnline and AzureAD..." -ForegroundColor Yellow
+        Write-Host "Connecting to Teams..."
+        Import-Module MicrosoftTeams;Connect-MicrosoftTeams -Credential $Credential | Out-Null
+        Write-Host "Connecting to ExchangeOnline..."
+        Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -Credential $Credential -ShowBanner:$false
+        iseTitle
+    }
+
 }
 
 Function refreshM365 {
@@ -89,4 +111,5 @@ Function refreshM365 {
             Install-Module -Repository PSGallery -Name $availableModule.Name            
         }
     }
+    Update-Module
 }
