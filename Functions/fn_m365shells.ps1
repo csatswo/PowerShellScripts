@@ -16,15 +16,15 @@ Function teams {
 }
 
 Function exo {
-    if ((Get-Host).Version -lt 5.2) { Import-Module ExchangeOnlineManagement -UseWindowsPowerShell;Connect-ExchangeOnline -ShowBanner:$false }
-    else { Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -ShowBanner:$false }
+    if ((Get-Host).Version -lt 5.2) { Import-Module ExchangeOnlineManagement ;Connect-ExchangeOnline -ShowBanner:$false }
+    else { Import-Module ExchangeOnlineManagement;Connect-ExchangeOnline -UseWindowsPowerShell -ShowBanner:$false }
 }
 
 Function spo {
     $domain = ((Get-CsOnlineSipDomain | Where-Object {$_.Name -like "*.onmicrosoft.com" -and $_.Name -notlike "*.mail.onmicrosoft.com"}).Name) -replace "\.onmicrosoft\.com"
     $spoAdminUrl = "https://"+$domain+"-admin.sharepoint.com"
-    if ((Get-Host).Version -lt 5.2) { Import-Module Microsoft.Online.SharePoint.PowerShell -UseWindowsPowerShell -WarningAction SilentlyContinue;Connect-SPOService -Url $spoAdminUrl }
-    else { Import-Module Microsoft.Online.SharePoint.PowerShell -WarningAction SilentlyContinue;Connect-SPOService -Url $spoAdminUrl }
+    if ((Get-Host).Version -lt 5.2) { Import-Module Microsoft.Online.SharePoint.PowerShell -WarningAction SilentlyContinue;Connect-SPOService -Url $spoAdminUrl }
+    else { Import-Module Microsoft.Online.SharePoint.PowerShell -UseWindowsPowerShell -WarningAction SilentlyContinue;Connect-SPOService -Url $spoAdminUrl }
 }
 
 Function m365mfa {
