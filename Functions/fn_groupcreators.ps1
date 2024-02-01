@@ -45,8 +45,8 @@
     }
     try {
         $aadUnifiedGroupSettings = (Get-AzureADDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ)
-        $aadUnifiedGroupSettingsValues = $aadUnifiedGroupSettings.Values
-        if (!($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value) {
+        $aadUnifiedGroupSettingsValues = ($aadUnifiedGroupSettings.Values | ? {$_.Name -like "*GroupCreation*"})
+        if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value -eq "True") {
                 Write-Output "`nUnified Group settings are configured but group creation is not restricted."
             if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value) {
                 $groupCreationAllowedGroup = Get-AzureADGroup -ObjectId ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value
@@ -76,3 +76,42 @@
         Write-Output "`nNo Unified Group settings configured`n"
     }
 }
+
+<#
+Import-Module Microsoft.Graph.Beta.Identity.DirectoryManagement
+Import-Module Microsoft.Graph.Beta.Groups
+Connect-MgGraph -Scopes "Directory.ReadWrite.All", "Group.Read.All"
+$GroupName = "GroupCreators"
+$AllowGroupCreation = "False"
+$settingsObjectID = (Get-MgBetaDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ).id
+if(!$settingsObjectID)
+{
+    $params = @{
+        templateId = "62375ab9-6b52-47ed-826b-58e47e0e304b"
+        values = @(
+            @{
+                name = "EnableMSStandardBlockedWords"
+                value = "true"
+            }
+        )
+    }
+    New-MgBetaDirectorySetting -BodyParameter $params
+    $settingsObjectID = (Get-MgBetaDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ).Id
+}
+$groupId = (Get-MgBetaGroup | Where-object {$_.displayname -eq $GroupName}).Id
+$params = @{
+	templateId = "62375ab9-6b52-47ed-826b-58e47e0e304b"
+	values = @(
+		@{
+			name = "EnableGroupCreation"
+			value = $AllowGroupCreation
+		}
+		@{
+			name = "GroupCreationAllowedGroupId"
+			value = $groupId
+		}
+	)
+}
+Update-MgBetaDirectorySetting -DirectorySettingId $settingsObjectID -BodyParameter $params
+(Get-MgBetaDirectorySetting -DirectorySettingId $settingsObjectID).Values
+#>
