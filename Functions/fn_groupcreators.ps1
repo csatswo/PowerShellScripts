@@ -46,32 +46,30 @@
     try {
         $aadUnifiedGroupSettings = (Get-AzureADDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ)
         $aadUnifiedGroupSettingsValues = ($aadUnifiedGroupSettings.Values | ? {$_.Name -like "*GroupCreation*"})
+        $aadUnifiedGroupSettingsValues | ft -AutoSize
         if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value -eq "True") {
-                Write-Output "`nUnified Group settings are configured but group creation is not restricted."
+            Write-Output "Unified Group settings are configured but group creation is not restricted."
             if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value) {
                 $groupCreationAllowedGroup = Get-AzureADGroup -ObjectId ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value
-                Write-Output "The `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned."
+                Write-Output "`nThe `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned."
                 $groupCreatorUsers = @()
                 $groupCreatorUsers = EnumerateGroupCreatorsGroups -Group $groupCreationAllowedGroup -Iteration 0 -Verbose | Sort-Object ParentGroup,MembershipGroup,UserPrincipalName | Select-Object DisplayName,UserPrincipalName,UserType,MembershipGroup,GroupID,ParentGroup
                 $groupCreatorUsers | ft -AutoSize
             } else {
                 Write-Output "No group is assigned."
-                $aadUnifiedGroupSettingsValues
             }
         } else {
-            Write-Output "`nUnified Group settings are configured and group creation is restricted."
-            if ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}) {            
+            Write-Output "Unified Group settings are configured and group creation is restricted."
+            if ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}) {
                 $groupCreationAllowedGroup = Get-AzureADGroup -ObjectId ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value
-                Write-Output "The `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned.`n"
+                Write-Output "`nThe `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned.`n"
                 $groupCreatorUsers = @()
                 $groupCreatorUsers = EnumerateGroupCreatorsGroups -Group $groupCreationAllowedGroup -Iteration 0 -Verbose | Sort-Object ParentGroup,MembershipGroup,UserPrincipalName | Select-Object DisplayName,UserPrincipalName,UserType,MembershipGroup,GroupID,ParentGroup
                 $groupCreatorUsers | ft -AutoSize
             } else {
                 Write-Warning "No group is assigned."
-                $aadUnifiedGroupSettingsValues
             }
         }
-    
     } catch {
         Write-Output "`nNo Unified Group settings configured`n"
     }
