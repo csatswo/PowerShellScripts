@@ -32,7 +32,7 @@ Function ShrinkVHDX {
 Function ShrinkVM {
     [cmdletbinding()]
     param(
-        [parameter(Mandatory=$true,ValueFromPipeline=$true)]$Name,
+        [parameter(Mandatory=$true,ValueFromPipeline=$true)][string]$Name,
         [parameter(Mandatory=$false,ValueFromPipeline=$true)][switch]$AutoStop
     )
     Process {
@@ -118,7 +118,7 @@ Function ShrinkAllVM {
             }
         }
         Write-Host "`nShrink complete. Total shrinkage is $(($results.Shrunk | Measure-Object -Sum).Sum) GB."
-        Return $results | Select-Object Name,VHDX,Before,After,Shrunk | ft -AutoSize
+        Return $results | Select-Object Name,VHDX,Before,After,Shrunk | Format-Table -AutoSize
     }
 }
 
