@@ -6,25 +6,19 @@
     )
     $teamsGuests = @()
     $teams = @()
-    if ($GroupId) {
-        $teams = Get-Team -GroupId $GroupId -WarningAction SilentlyContinue
-    }
-    if ($MailNickName) {
-        $teams = Get-Team -MailNickName $MailNickName -WarningAction SilentlyContinue
-    }
-    if ($DisplayName) {
-        $teams = Get-Team -DisplayName $DisplayName -WarningAction SilentlyContinue
-    }
+    if ($GroupId) { $teams = @(Get-Team -GroupId $GroupId -WarningAction SilentlyContinue) }
+    if ($MailNickName) { $teams = @(Get-Team -MailNickName $MailNickName -WarningAction SilentlyContinue) }
+    if ($DisplayName) { $teams = @(Get-Team -DisplayName $DisplayName -WarningAction SilentlyContinue) }
     if (-not ($teams)) {
-        Write-Warning -Message "This will run for every user and can be extremely slow."
+        Write-Warning -Message "This will run for every team and can be extremely slow."
         $proceed = Read-Host -Prompt "Type `'Yes`' to proceed"
         if ($proceed -eq "Yes") {
-            $teams = Get-Team -WarningAction SilentlyContinue
+            $teams = @(Get-Team -WarningAction SilentlyContinue)
         } else { Break }
     }
-    Foreach ($team in $teams) {
-        $guests = Get-TeamUser -GroupId $team.GroupId -Role Guest
-        Foreach ($guest in $guests) {
+    foreach ($team in $teams) {
+        $guests = @(Get-TeamUser -GroupId $team.GroupId -Role Guest)
+        foreach ($guest in $guests) {
             $teamsGuests += [PSCustomObject]@{
                 GuestUserId = $guest.UserId
                 UserPrincipalName = $guest.User
@@ -40,9 +34,9 @@
         }
     }
     if ($teamsGuests) {
-        Write-Host "`n`nThe following guests were found:" -ForegroundColor Cyan
+        Write-Output "`n`nThe following guests were found:"
         $teamsGuests | Sort-Object TeamDisplayName
     } else {
-        Write-Host "`n`nNo guests were found" -ForegroundColor Cyan
+        Write-Output "`nNo guests were found"
     }
 }
