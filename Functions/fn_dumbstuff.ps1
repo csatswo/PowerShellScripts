@@ -1,4 +1,7 @@
-﻿Function FirstLetters {
+﻿Function whatismyip {
+    Invoke-RestMethod -Method Get -Uri "4.ident.me"
+}
+Function FirstLetters {
     [CmdletBinding()]Param([string]$String)
     $firstLetters = @()
     foreach ($wordStr in (($String.ToLower() -split " ") -replace "\W")) {
