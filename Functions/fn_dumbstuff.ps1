@@ -1,6 +1,12 @@
 ﻿Function whatismyip {
     Invoke-RestMethod -Method Get -Uri "4.ident.me"
 }
+
+Function RandStr {
+    Param([Parameter(Mandatory=$false)][int]$Length=10)
+    ((48..57) + (65..90) + (97..122) | Get-Random -Count $Length | % { [char]$_ }) -join ""
+}
+
 Function FirstLetters {
     [CmdletBinding()]Param([string]$String)
     $firstLetters = @()
