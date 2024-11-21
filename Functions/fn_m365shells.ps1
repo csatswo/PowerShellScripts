@@ -29,14 +29,14 @@ Function spo {
 
 Function m365mfa {
     if ((Get-Host).Version -match '5.1') {
-        Write-Host "Connecting to MSOnline..."
-        msol
-        Write-Host "Connecting to AzureAD..."
-        aad
         Write-Host "Connecting to Teams..."
         teams
         Write-Host "Connecting to ExchangeOnline..."
         exo
+        Write-Host "Connecting to MSOnline..."
+        msol
+        Write-Host "Connecting to AzureAD..."
+        aad
         iseTitle
     }
     else {

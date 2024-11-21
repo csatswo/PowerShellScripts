@@ -45,8 +45,8 @@
     }
     try {
         $aadUnifiedGroupSettings = (Get-AzureADDirectorySetting | Where-object -Property Displayname -Value "Group.Unified" -EQ)
-        $aadUnifiedGroupSettingsValues = ($aadUnifiedGroupSettings.Values | ? {$_.Name -like "*GroupCreation*"})
-        $aadUnifiedGroupSettingsValues | ft -AutoSize
+        $aadUnifiedGroupSettingsValues = ($aadUnifiedGroupSettings.Values | Where-Object {$_.Name -like "*GroupCreation*"})
+        $aadUnifiedGroupSettingsValues | Format-Table -AutoSize
         if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'EnableGroupCreation'}).Value -eq "True") {
             Write-Output "Unified Group settings are configured but group creation is not restricted."
             if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value) {
@@ -54,18 +54,18 @@
                 Write-Output "`nThe `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned."
                 $groupCreatorUsers = @()
                 $groupCreatorUsers = EnumerateGroupCreatorsGroups -Group $groupCreationAllowedGroup -Iteration 0 -Verbose | Sort-Object ParentGroup,MembershipGroup,UserPrincipalName | Select-Object DisplayName,UserPrincipalName,UserType,MembershipGroup,GroupID,ParentGroup
-                $groupCreatorUsers | ft -AutoSize
+                $groupCreatorUsers | Format-Table -AutoSize
             } else {
                 Write-Output "No group is assigned."
             }
         } else {
             Write-Output "Unified Group settings are configured and group creation is restricted."
-            if ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}) {
+            if (($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value) {
                 $groupCreationAllowedGroup = Get-AzureADGroup -ObjectId ($aadUnifiedGroupSettingsValues | Where-Object {$_.Name -eq 'GroupCreationAllowedGroupId'}).Value
                 Write-Output "`nThe `'$($groupCreationAllowedGroup.DisplayName)`' group is assigned.`n"
                 $groupCreatorUsers = @()
                 $groupCreatorUsers = EnumerateGroupCreatorsGroups -Group $groupCreationAllowedGroup -Iteration 0 -Verbose | Sort-Object ParentGroup,MembershipGroup,UserPrincipalName | Select-Object DisplayName,UserPrincipalName,UserType,MembershipGroup,GroupID,ParentGroup
-                $groupCreatorUsers | ft -AutoSize
+                $groupCreatorUsers | Format-Table -AutoSize
             } else {
                 Write-Warning "No group is assigned."
             }
